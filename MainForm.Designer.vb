@@ -13,6 +13,13 @@ Namespace WorldEditorNet
         Friend WithEvents openMapMenuItem As ToolStripMenuItem
         Friend WithEvents saveMapMenuItem As ToolStripMenuItem
         Friend WithEvents exitMenuItem As ToolStripMenuItem
+        Friend WithEvents viewMenuItem As ToolStripMenuItem
+        Friend WithEvents layer1MenuItem As ToolStripMenuItem
+        Friend WithEvents layer2MenuItem As ToolStripMenuItem
+        Friend WithEvents layer3MenuItem As ToolStripMenuItem
+        Friend WithEvents layer4MenuItem As ToolStripMenuItem
+        Friend WithEvents blockedMenuItem As ToolStripMenuItem
+        Friend WithEvents gridMenuItem As ToolStripMenuItem
         Friend WithEvents mapScrollPanel As Panel
         Friend WithEvents mapSurface As MapSurfaceControl
         Friend WithEvents statusStrip1 As StatusStrip
@@ -38,6 +45,13 @@ Namespace WorldEditorNet
             Me.openMapMenuItem = New ToolStripMenuItem()
             Me.saveMapMenuItem = New ToolStripMenuItem()
             Me.exitMenuItem = New ToolStripMenuItem()
+            Me.viewMenuItem = New ToolStripMenuItem()
+            Me.layer1MenuItem = New ToolStripMenuItem()
+            Me.layer2MenuItem = New ToolStripMenuItem()
+            Me.layer3MenuItem = New ToolStripMenuItem()
+            Me.layer4MenuItem = New ToolStripMenuItem()
+            Me.blockedMenuItem = New ToolStripMenuItem()
+            Me.gridMenuItem = New ToolStripMenuItem()
             Me.mapScrollPanel = New Panel()
             Me.mapSurface = New MapSurfaceControl()
             Me.statusStrip1 = New StatusStrip()
@@ -49,7 +63,7 @@ Namespace WorldEditorNet
             Me.statusStrip1.SuspendLayout()
             Me.SuspendLayout()
 
-            Me.menuStrip1.Items.AddRange(New ToolStripItem() {Me.fileMenuItem})
+            Me.menuStrip1.Items.AddRange(New ToolStripItem() {Me.fileMenuItem, Me.viewMenuItem})
             Me.menuStrip1.Location = New Point(0, 0)
             Me.menuStrip1.Name = "menuStrip1"
             Me.menuStrip1.Size = New Size(1100, 24)
@@ -63,6 +77,18 @@ Namespace WorldEditorNet
             Me.openMapMenuItem.Text = "Abrir mapa..."
             Me.saveMapMenuItem.Text = "Guardar mapa"
             Me.exitMenuItem.Text = "Salir"
+
+            Me.viewMenuItem.DropDownItems.AddRange(New ToolStripItem() {
+                Me.layer1MenuItem, Me.layer2MenuItem, Me.layer3MenuItem,
+                Me.layer4MenuItem, New ToolStripSeparator(),
+                Me.blockedMenuItem, Me.gridMenuItem})
+            Me.viewMenuItem.Text = "Ver"
+            Me.layer1MenuItem.Text = "Capa 1 (piso)"
+            Me.layer2MenuItem.Text = "Capa 2"
+            Me.layer3MenuItem.Text = "Capa 3"
+            Me.layer4MenuItem.Text = "Capa 4"
+            Me.blockedMenuItem.Text = "Bloqueos"
+            Me.gridMenuItem.Text = "Cuadrícula"
 
             Me.mapScrollPanel.AutoScroll = True
             Me.mapScrollPanel.BackColor = Color.DimGray

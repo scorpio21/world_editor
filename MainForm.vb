@@ -74,6 +74,35 @@ Namespace WorldEditorNet
             Close()
         End Sub
 
+        Private Sub Layer1MenuItem_Click(sender As Object, e As EventArgs) Handles layer1MenuItem.Click
+            ToggleViewItem(layer1MenuItem, Sub(value) mapSurface.ShowLayer1 = value)
+        End Sub
+
+        Private Sub Layer2MenuItem_Click(sender As Object, e As EventArgs) Handles layer2MenuItem.Click
+            ToggleViewItem(layer2MenuItem, Sub(value) mapSurface.ShowLayer2 = value)
+        End Sub
+
+        Private Sub Layer3MenuItem_Click(sender As Object, e As EventArgs) Handles layer3MenuItem.Click
+            ToggleViewItem(layer3MenuItem, Sub(value) mapSurface.ShowLayer3 = value)
+        End Sub
+
+        Private Sub Layer4MenuItem_Click(sender As Object, e As EventArgs) Handles layer4MenuItem.Click
+            ToggleViewItem(layer4MenuItem, Sub(value) mapSurface.ShowLayer4 = value)
+        End Sub
+
+        Private Sub BlockedMenuItem_Click(sender As Object, e As EventArgs) Handles blockedMenuItem.Click
+            ToggleViewItem(blockedMenuItem, Sub(value) mapSurface.ShowBlocked = value)
+        End Sub
+
+        Private Sub GridMenuItem_Click(sender As Object, e As EventArgs) Handles gridMenuItem.Click
+            ToggleViewItem(gridMenuItem, Sub(value) mapSurface.ShowGrid = value)
+        End Sub
+
+        Private Shared Sub ToggleViewItem(item As ToolStripMenuItem, apply As Action(Of Boolean))
+            item.Checked = Not item.Checked
+            apply(item.Checked)
+        End Sub
+
         Private Sub MapSurface_CellSelected(sender As Object, e As EventArgs) Handles mapSurface.CellSelected
             UpdateMapStatus()
         End Sub
@@ -98,8 +127,25 @@ Namespace WorldEditorNet
 
             _mapPath = String.Empty
             mapSurface.Document = _document
+            ApplySettingsToView()
             mapSurface.ResetSelection()
             UpdateMapStatus(If(String.IsNullOrWhiteSpace(_startupMessage), "Nuevo mapa", _startupMessage))
+        End Sub
+
+        Private Sub ApplySettingsToView()
+            If _settings Is Nothing Then Return
+            layer1MenuItem.Checked = True
+            layer2MenuItem.Checked = _settings.VerCapa2
+            layer3MenuItem.Checked = _settings.VerCapa3
+            layer4MenuItem.Checked = _settings.VerCapa4
+            blockedMenuItem.Checked = _settings.VerBloqueos
+            gridMenuItem.Checked = _settings.VerGrilla
+            mapSurface.ShowLayer1 = layer1MenuItem.Checked
+            mapSurface.ShowLayer2 = layer2MenuItem.Checked
+            mapSurface.ShowLayer3 = layer3MenuItem.Checked
+            mapSurface.ShowLayer4 = layer4MenuItem.Checked
+            mapSurface.ShowBlocked = blockedMenuItem.Checked
+            mapSurface.ShowGrid = gridMenuItem.Checked
         End Sub
 
         Private Sub UpdateMapStatus(Optional message As String = "")

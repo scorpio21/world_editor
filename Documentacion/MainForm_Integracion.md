@@ -12,7 +12,7 @@ paridad visual con DirectDraw.
 - Menú `Archivo` con `Nuevo mapa`, `Abrir mapa`, `Guardar mapa` y `Salir`.
 - Panel desplazable para una superficie de 100x100 celdas.
 - Selección de celda con coordenadas en la barra de estado.
-- Visualización del GRH de capa 1 y resaltado de celdas bloqueadas.
+- Visualización de los GRH de las capas activadas y resaltado opcional de celdas bloqueadas.
 - Carga y guardado de pares `.map/.inf` V1.
 - Creación de un mapa nuevo con GRH 1 en la capa 1, siguiendo `NuevoMapa`.
 - Exclusión del proyecto de pruebas de la compilación recursiva del proyecto
@@ -21,17 +21,18 @@ paridad visual con DirectDraw.
   al arrancar. Si no existe, usa los valores predeterminados; si contiene
   rutas históricas que no existen, informa del problema en la barra de estado
   sin cerrar el editor.
+- El menú `Ver` ya refleja las opciones de capas 1-4, bloqueos y cuadrícula.
+  La superficie aplica esos estados y muestra los GRH disponibles de las
+  capas activadas como texto mientras no exista el cargador de BMP/GRH.
 
 ## Diferencias pendientes
 
 - No se cargan BMP ni `Graficos.ind`; por tanto, se muestran índices GRH y no
   sprites.
-- No están migradas las capas 2, 3 y 4 en la superficie visual.
 - No están migrados NPC, objetos, triggers, translados ni radar.
 - No están migrados los menús de edición ni el estado `MapInfo.Changed`.
-- No está conectado todavía `WorldEditorSettingsLoader` a `MainForm`.
-- Las opciones cargadas todavía no controlan los menús ni el render; solo se
-  ha integrado la carga segura durante el arranque.
+- Las opciones cargadas controlan ahora las capas, los bloqueos y la cuadrícula
+  de esta superficie inicial; todavía no controlan un renderer de sprites.
 - No existe todavía renderer DirectDraw/GDI+ equivalente.
 - V2 y V3 siguen sin implementarse.
 
