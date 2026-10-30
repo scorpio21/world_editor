@@ -27,6 +27,8 @@ WinForms sobre .NET 8.
   `Core/MapV1Codec.vb`; V2/V3 y la integración con el editor siguen pendientes.
 - La prueba `WorldEditorNet.Tests` ejecuta un round-trip V1 en un directorio
   temporal y comprueba tamaños, cabecera y datos de una celda.
+- `MainForm` ya tiene una superficie WinForms inicial para abrir, guardar,
+  seleccionar y visualizar celdas V1; todavía no es el renderer gráfico final.
 - Estructuras, constantes y estado de datos documentados.
 - DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
   implementados.

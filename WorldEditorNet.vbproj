@@ -10,4 +10,9 @@
     <OptionExplicit>On</OptionExplicit>
     <OptionInfer>On</OptionInfer>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="WorldEditorNet.Tests\**" />
+    <EmbeddedResource Remove="WorldEditorNet.Tests\**" />
+    <None Remove="WorldEditorNet.Tests\**" />
+  </ItemGroup>
 </Project>
