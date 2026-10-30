@@ -53,6 +53,9 @@ paridad visual con DirectDraw.
   confirmación. Siguen la regla de `Quitar_Capa`: capa 1 se restablece a GRH
   `1` y capas 2–4 a `0` en las 10.000 celdas. Al ser una operación global,
   invalida el deshacer de un nivel hasta portar la pila completa.
+- Añadidos `Bloquear todo el mapa` y `Quitar todos los bloqueos`, equivalentes
+  a `Bloqueo_Todo(1)` y `Bloqueo_Todo(0)`, con confirmación y actualización de
+  `Changed` sobre las 10.000 celdas.
 - `clsIniReader` registra las páginas de códigos de .NET 8 para conservar la
   lectura ANSI/CP1252 de los INI históricos.
 

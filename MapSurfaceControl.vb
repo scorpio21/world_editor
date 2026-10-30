@@ -130,6 +130,31 @@ Namespace WorldEditorNet
             Return changed
         End Function
 
+        Public Function SetAllBlocked(ByVal blocked As Boolean) As Boolean
+            If _document Is Nothing Then Return False
+
+            Dim value As Byte = If(blocked, CByte(1), CByte(0))
+            Dim changed As Boolean = False
+            For y As Integer = 1 To 100
+                For x As Integer = 1 To 100
+                    Dim cell As MapV1Cell = _document.Cells(x, y)
+                    If cell.Blocked <> value Then
+                        cell.Blocked = value
+                        _document.Cells(x, y) = cell
+                        changed = True
+                    End If
+                Next
+            Next
+
+            If changed Then
+                _document.Changed = True
+                _hasUndo = False
+                Invalidate()
+                RaiseEvent CellEdited(Me, EventArgs.Empty)
+            End If
+            Return changed
+        End Function
+
         Public Function UndoLastEdit() As Boolean
             If _document Is Nothing OrElse Not _hasUndo Then Return False
 

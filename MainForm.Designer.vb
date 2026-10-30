@@ -24,6 +24,8 @@ Namespace WorldEditorNet
         Friend WithEvents clearLayer2MenuItem As ToolStripMenuItem
         Friend WithEvents clearLayer3MenuItem As ToolStripMenuItem
         Friend WithEvents clearLayer4MenuItem As ToolStripMenuItem
+        Friend WithEvents blockAllMenuItem As ToolStripMenuItem
+        Friend WithEvents unblockAllMenuItem As ToolStripMenuItem
         Friend WithEvents viewMenuItem As ToolStripMenuItem
         Friend WithEvents optionsMenuItem As ToolStripMenuItem
         Friend WithEvents saveConfigMenuItem As ToolStripMenuItem
@@ -73,6 +75,8 @@ Namespace WorldEditorNet
             Me.clearLayer2MenuItem = New ToolStripMenuItem()
             Me.clearLayer3MenuItem = New ToolStripMenuItem()
             Me.clearLayer4MenuItem = New ToolStripMenuItem()
+            Me.blockAllMenuItem = New ToolStripMenuItem()
+            Me.unblockAllMenuItem = New ToolStripMenuItem()
             Me.viewMenuItem = New ToolStripMenuItem()
             Me.optionsMenuItem = New ToolStripMenuItem()
             Me.saveConfigMenuItem = New ToolStripMenuItem()
@@ -117,7 +121,8 @@ Namespace WorldEditorNet
                 New ToolStripSeparator(), Me.setLayer1MenuItem, Me.setLayer2MenuItem,
                 Me.setLayer3MenuItem, Me.setLayer4MenuItem, New ToolStripSeparator(),
                 Me.clearLayer1MenuItem, Me.clearLayer2MenuItem, Me.clearLayer3MenuItem,
-                Me.clearLayer4MenuItem})
+                Me.clearLayer4MenuItem, New ToolStripSeparator(), Me.blockAllMenuItem,
+                Me.unblockAllMenuItem})
             Me.editMenuItem.Text = "Edición"
             Me.undoMenuItem.Text = "Deshacer"
             Me.undoMenuItem.Enabled = False
@@ -130,6 +135,8 @@ Namespace WorldEditorNet
             Me.clearLayer2MenuItem.Text = "Borrar capa 2 completa"
             Me.clearLayer3MenuItem.Text = "Borrar capa 3 completa"
             Me.clearLayer4MenuItem.Text = "Borrar capa 4 completa"
+            Me.blockAllMenuItem.Text = "Bloquear todo el mapa"
+            Me.unblockAllMenuItem.Text = "Quitar todos los bloqueos"
 
             Me.viewMenuItem.DropDownItems.AddRange(New ToolStripItem() {
                 Me.layer1MenuItem, Me.layer2MenuItem, Me.layer3MenuItem,

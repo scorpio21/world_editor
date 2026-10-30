@@ -194,6 +194,32 @@ Namespace WorldEditorNet
             ClearCompleteLayer(4)
         End Sub
 
+        Private Sub BlockAllMenuItem_Click(sender As Object, e As EventArgs) Handles blockAllMenuItem.Click
+            SetAllBlocked(True)
+        End Sub
+
+        Private Sub UnblockAllMenuItem_Click(sender As Object, e As EventArgs) Handles unblockAllMenuItem.Click
+            SetAllBlocked(False)
+        End Sub
+
+        Private Sub SetAllBlocked(ByVal blocked As Boolean)
+            Dim action As String = If(blocked, "bloquear", "quitar todos los bloqueos de")
+            Dim answer As DialogResult = MessageBox.Show(
+                Me,
+                $"¿Quieres {action} todo el mapa?",
+                "Cambiar bloqueos",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning)
+            If answer <> DialogResult.Yes Then Return
+
+            If mapSurface.SetAllBlocked(blocked) Then
+                undoMenuItem.Enabled = False
+                UpdateMapStatus(If(blocked, "Mapa bloqueado", "Bloqueos eliminados"))
+            Else
+                statusLabel.Text = "El estado de bloqueos ya estaba aplicado"
+            End If
+        End Sub
+
         Private Sub ClearCompleteLayer(ByVal layer As Integer)
             If _document Is Nothing Then Return
 

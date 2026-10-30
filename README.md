@@ -48,6 +48,7 @@ WinForms sobre .NET 8.
   de la celda seleccionada.
 - También permite borrar una capa completa, restaurando la capa 1 a GRH `1` y
   las capas 2–4 a `0`, después de pedir confirmación.
+- Incluye comandos para bloquear o desbloquear todas las celdas del mapa.
 - Estructuras, constantes y estado de datos documentados.
 - DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
   implementados.
