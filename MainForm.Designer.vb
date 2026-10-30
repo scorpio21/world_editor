@@ -13,6 +13,8 @@ Namespace WorldEditorNet
         Friend WithEvents openMapMenuItem As ToolStripMenuItem
         Friend WithEvents saveMapMenuItem As ToolStripMenuItem
         Friend WithEvents exitMenuItem As ToolStripMenuItem
+        Friend WithEvents editMenuItem As ToolStripMenuItem
+        Friend WithEvents toggleBlockedMenuItem As ToolStripMenuItem
         Friend WithEvents viewMenuItem As ToolStripMenuItem
         Friend WithEvents optionsMenuItem As ToolStripMenuItem
         Friend WithEvents saveConfigMenuItem As ToolStripMenuItem
@@ -51,6 +53,8 @@ Namespace WorldEditorNet
             Me.openMapMenuItem = New ToolStripMenuItem()
             Me.saveMapMenuItem = New ToolStripMenuItem()
             Me.exitMenuItem = New ToolStripMenuItem()
+            Me.editMenuItem = New ToolStripMenuItem()
+            Me.toggleBlockedMenuItem = New ToolStripMenuItem()
             Me.viewMenuItem = New ToolStripMenuItem()
             Me.optionsMenuItem = New ToolStripMenuItem()
             Me.saveConfigMenuItem = New ToolStripMenuItem()
@@ -75,7 +79,7 @@ Namespace WorldEditorNet
             Me.statusStrip1.SuspendLayout()
             Me.SuspendLayout()
 
-            Me.menuStrip1.Items.AddRange(New ToolStripItem() {Me.fileMenuItem, Me.viewMenuItem, Me.optionsMenuItem})
+            Me.menuStrip1.Items.AddRange(New ToolStripItem() {Me.fileMenuItem, Me.editMenuItem, Me.viewMenuItem, Me.optionsMenuItem})
             Me.menuStrip1.Location = New Point(0, 0)
             Me.menuStrip1.Name = "menuStrip1"
             Me.menuStrip1.Size = New Size(1100, 24)
@@ -89,6 +93,10 @@ Namespace WorldEditorNet
             Me.openMapMenuItem.Text = "Abrir mapa..."
             Me.saveMapMenuItem.Text = "Guardar mapa"
             Me.exitMenuItem.Text = "Salir"
+
+            Me.editMenuItem.DropDownItems.Add(Me.toggleBlockedMenuItem)
+            Me.editMenuItem.Text = "Edición"
+            Me.toggleBlockedMenuItem.Text = "Alternar bloqueo de la celda"
 
             Me.viewMenuItem.DropDownItems.AddRange(New ToolStripItem() {
                 Me.layer1MenuItem, Me.layer2MenuItem, Me.layer3MenuItem,

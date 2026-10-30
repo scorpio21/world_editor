@@ -35,6 +35,7 @@ Namespace WorldEditorNet
         End Class
 
         Public Event CellSelected As EventHandler
+        Public Event CellEdited As EventHandler
 
         Public Property Document As MapV1Document
             Get
@@ -68,6 +69,18 @@ Namespace WorldEditorNet
                 Return _selectedY
             End Get
         End Property
+
+        Public Function ToggleSelectedBlocked() As Boolean
+            If _document Is Nothing OrElse _selectedX < 1 OrElse _selectedY < 1 Then Return False
+
+            Dim cell As MapV1Cell = _document.Cells(_selectedX, _selectedY)
+            cell.Blocked = If(cell.Blocked = 0, CByte(1), CByte(0))
+            _document.Cells(_selectedX, _selectedY) = cell
+            _document.Changed = True
+            Invalidate()
+            RaiseEvent CellEdited(Me, EventArgs.Empty)
+            Return True
+        End Function
 
         Public Property ShowLayer1 As Boolean
             Get

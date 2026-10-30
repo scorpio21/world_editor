@@ -26,6 +26,7 @@ Namespace WorldEditorNet.Core
     Public NotInheritable Class MapV1Document
         Public Property MapVersion As Short
         Public Property Header As GameIni.tCabecera
+        Public Property Changed As Boolean
         Public ReadOnly Property Cells As MapV1Cell(,)
 
         Public Sub New()
@@ -51,6 +52,7 @@ Namespace WorldEditorNet.Core
             Using mapReader As New BinaryReader(File.Open(mapPath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 document.MapVersion = mapReader.ReadInt16()
                 document.Header = ReadHeader(mapReader)
+                document.Changed = False
                 For i As Integer = 1 To 4
                     mapReader.ReadInt16()
                 Next
@@ -137,6 +139,8 @@ Namespace WorldEditorNet.Core
                     Next
                 Next
             End Using
+
+            document.Changed = False
         End Sub
 
         Private Shared Function ReadHeader(ByVal reader As BinaryReader) As GameIni.tCabecera

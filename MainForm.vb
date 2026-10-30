@@ -112,6 +112,14 @@ Namespace WorldEditorNet
             Close()
         End Sub
 
+        Private Sub ToggleBlockedMenuItem_Click(sender As Object, e As EventArgs) Handles toggleBlockedMenuItem.Click
+            If mapSurface.ToggleSelectedBlocked() Then
+                UpdateMapStatus("Mapa modificado: bloqueo alternado")
+            Else
+                statusLabel.Text = "Selecciona una celda antes de editarla"
+            End If
+        End Sub
+
         Private Sub Layer1MenuItem_Click(sender As Object, e As EventArgs) Handles layer1MenuItem.Click
             ToggleViewItem(layer1MenuItem, Sub(value) mapSurface.ShowLayer1 = value)
         End Sub
@@ -165,9 +173,14 @@ Namespace WorldEditorNet
             UpdateMapStatus()
         End Sub
 
+        Private Sub MapSurface_CellEdited(sender As Object, e As EventArgs) Handles mapSurface.CellEdited
+            UpdateMapStatus("Mapa modificado")
+        End Sub
+
         Private Sub CreateNewMap()
             _document = New MapV1Document With {
                 .MapVersion = 0,
+                .Changed = False,
                 .Header = New GameIni.tCabecera With {
                     .Desc = "Argentum Online by Noland Studios.",
                     .CRC = 0,

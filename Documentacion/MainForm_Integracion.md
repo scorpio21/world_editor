@@ -35,6 +35,9 @@ paridad visual con DirectDraw.
   marcadores de diagnóstico (`N`, `O`, `E`, `T`) usando los valores del mapa.
 - `Opciones > Guardar última configuración` persiste las opciones de vista,
   rutas, última posición y último mapa en `Datos\WorldEditor.ini` al cerrar.
+- El menú `Edición > Alternar bloqueo de la celda` modifica la celda
+  seleccionada, actualiza su valor `Blocked`, refresca la superficie y marca
+  el documento como modificado mediante `MapV1Document.Changed`.
 - `clsIniReader` registra las páginas de códigos de .NET 8 para conservar la
   lectura ANSI/CP1252 de los INI históricos.
 
@@ -46,8 +49,12 @@ paridad visual con DirectDraw.
   respaldo y se informa del problema en la barra de estado.
 - Los NPC, objetos, translados y triggers todavía no usan sus sprites originales;
   solo tienen representación textual de diagnóstico. El radar sigue pendiente.
-- No están migrados los menús de edición ni el estado `MapInfo.Changed`.
-- La edición de celdas todavía no marca ni persiste un estado `Changed`.
+- Solo está migrada la edición básica explícita del bloqueo de la celda
+  seleccionada. Todavía faltan las demás herramientas de edición del VB6,
+  deshacer/rehacer y los diálogos de confirmación asociados.
+- `MapV1Document.Changed` ya se marca al editar y se limpia al cargar o
+  guardar; todavía falta usarlo para preguntar automáticamente antes de crear
+  un mapa nuevo, abrir otro mapa o cerrar el editor.
 - Las opciones cargadas controlan ahora las capas, los bloqueos y la cuadrícula
   de esta superficie inicial; todavía no controlan un renderer de sprites.
 - No existe todavía renderer DirectDraw/GDI+ equivalente.

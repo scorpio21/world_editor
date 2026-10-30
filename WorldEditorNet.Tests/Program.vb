@@ -32,10 +32,12 @@ Module Program
             Dim mapPath As String = Path.Combine(root, "Mapa1.map")
             Dim codec As New MapV1Codec()
             codec.Save(mapPath, source)
+            AssertEqual(False, source.Changed, "estado Changed tras guardar")
             AssertEqual(130273L, New FileInfo(mapPath).Length, "tamaño .map")
             AssertEqual(160010L, New FileInfo(Path.ChangeExtension(mapPath, ".inf")).Length, "tamaño .inf")
 
             Dim loaded As MapV1Document = codec.Load(mapPath)
+            AssertEqual(False, loaded.Changed, "estado Changed tras cargar")
             Dim actual As MapV1Cell = loaded.Cells(1, 1)
             AssertEqual(CShort(42), loaded.MapVersion, "versión")
             AssertEqual("WorldEditor V1 smoke test", loaded.Header.Desc, "descripción")
@@ -50,6 +52,10 @@ Module Program
             AssertEqual(CShort(12), actual.NpcIndex, "NPC")
             AssertEqual(CShort(33), actual.ObjIndex, "objeto")
             AssertEqual(CShort(4), actual.ObjAmount, "cantidad")
+
+            loaded.Changed = True
+            codec.Save(mapPath, loaded)
+            AssertEqual(False, loaded.Changed, "estado Changed tras segundo guardado")
 
             Dim indexPath As String = Path.Combine(root, "Graficos.ind")
             WriteSyntheticGraphicsIndex(indexPath)
