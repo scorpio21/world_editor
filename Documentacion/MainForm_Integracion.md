@@ -38,6 +38,10 @@ paridad visual con DirectDraw.
 - El menú `Edición > Alternar bloqueo de la celda` modifica la celda
   seleccionada, actualiza su valor `Blocked`, refresca la superficie y marca
   el documento como modificado mediante `MapV1Document.Changed`.
+- Si el documento tiene cambios pendientes, `Nuevo mapa`, `Abrir mapa` y
+  cerrar la ventana muestran una confirmación `Sí/No/Cancelar`. `Sí` guarda
+  usando el flujo normal, `No` continúa sin guardar y `Cancelar` detiene la
+  operación.
 - `clsIniReader` registra las páginas de códigos de .NET 8 para conservar la
   lectura ANSI/CP1252 de los INI históricos.
 
@@ -54,7 +58,7 @@ paridad visual con DirectDraw.
   deshacer/rehacer y los diálogos de confirmación asociados.
 - `MapV1Document.Changed` ya se marca al editar y se limpia al cargar o
   guardar; todavía falta usarlo para preguntar automáticamente antes de crear
-  un mapa nuevo, abrir otro mapa o cerrar el editor.
+  otras operaciones de edición no migradas.
 - Las opciones cargadas controlan ahora las capas, los bloqueos y la cuadrícula
   de esta superficie inicial; todavía no controlan un renderer de sprites.
 - No existe todavía renderer DirectDraw/GDI+ equivalente.

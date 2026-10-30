@@ -21,6 +21,11 @@ Namespace WorldEditorNet
         End Sub
 
         Private Sub MainForm_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
+            If Not ConfirmSaveChanges() Then
+                e.Cancel = True
+                Return
+            End If
+
             If _settings Is Nothing Then Return
             _settings.GuardarConfig = saveConfigMenuItem.Checked
             If Not _settings.GuardarConfig Then Return
@@ -74,10 +79,12 @@ Namespace WorldEditorNet
         End Sub
 
         Private Sub NewMapMenuItem_Click(sender As Object, e As EventArgs) Handles newMapMenuItem.Click
+            If Not ConfirmSaveChanges() Then Return
             CreateNewMap()
         End Sub
 
         Private Sub OpenMapMenuItem_Click(sender As Object, e As EventArgs) Handles openMapMenuItem.Click
+            If Not ConfirmSaveChanges() Then Return
             If openMapDialog.ShowDialog(Me) <> DialogResult.OK Then Return
             Try
                 Dim codec As New MapV1Codec()
@@ -92,9 +99,13 @@ Namespace WorldEditorNet
         End Sub
 
         Private Sub SaveMapMenuItem_Click(sender As Object, e As EventArgs) Handles saveMapMenuItem.Click
-            If _document Is Nothing Then Return
+            SaveCurrentMap()
+        End Sub
+
+        Private Function SaveCurrentMap() As Boolean
+            If _document Is Nothing Then Return False
             If String.IsNullOrWhiteSpace(_mapPath) Then
-                If saveMapDialog.ShowDialog(Me) <> DialogResult.OK Then Return
+                If saveMapDialog.ShowDialog(Me) <> DialogResult.OK Then Return False
                 _mapPath = saveMapDialog.FileName
             End If
 
@@ -102,11 +113,33 @@ Namespace WorldEditorNet
                 Dim codec As New MapV1Codec()
                 codec.Save(_mapPath, _document)
                 UpdateMapStatus("Mapa guardado")
+                Return True
             Catch ex As Exception
                 MessageBox.Show(Me, ex.Message, "No se pudo guardar el mapa",
                                 MessageBoxButtons.OK, MessageBoxIcon.Error)
+                Return False
             End Try
-        End Sub
+        End Function
+
+        Private Function ConfirmSaveChanges() As Boolean
+            If _document Is Nothing OrElse Not _document.Changed Then Return True
+
+            Dim answer As DialogResult = MessageBox.Show(
+                Me,
+                "El mapa tiene cambios sin guardar. ¿Quieres guardarlos?",
+                "Cambios sin guardar",
+                MessageBoxButtons.YesNoCancel,
+                MessageBoxIcon.Warning)
+
+            Select Case answer
+                Case DialogResult.Yes
+                    Return SaveCurrentMap()
+                Case DialogResult.No
+                    Return True
+                Case Else
+                    Return False
+            End Select
+        End Function
 
         Private Sub ExitMenuItem_Click(sender As Object, e As EventArgs) Handles exitMenuItem.Click
             Close()

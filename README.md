@@ -40,6 +40,8 @@ WinForms sobre .NET 8.
   posición/mapa reciente en `Datos/WorldEditor.ini` al cerrar.
 - `Edición > Alternar bloqueo de la celda` permite cambiar el bloqueo de la
   celda seleccionada y marca el documento como modificado (`Changed`).
+- Si hay cambios sin guardar, `Nuevo mapa`, `Abrir mapa` y cerrar preguntan si
+  deben guardarse antes de continuar.
 - Estructuras, constantes y estado de datos documentados.
 - DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
   implementados.
