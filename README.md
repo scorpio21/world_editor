@@ -8,6 +8,8 @@ WinForms sobre .NET 8.
 - Proyecto SDK-style creado y compilable con .NET 8.
 - `modDeclaraciones.bas` trasladado parcialmente a
   `Core/LegacyDeclarations.vb`.
+- `clsIniReader.cls` trasladado a `Core/clsIniReader.vb` con ordenación y
+  búsqueda binaria.
 - Estructuras, constantes y estado de datos documentados.
 - DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
   implementados.
