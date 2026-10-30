@@ -23,6 +23,8 @@ WinForms sobre .NET 8.
 - La serialización textual `.dat` de `modMapIO.bas` está aislada en
   `Core/MapInfoFile.vb`. Los formatos binarios `.map/.inf` siguen pendientes de
   verificación byte a byte.
+- El formato V1 `.map/.inf` ya está verificado y aislado en
+  `Core/MapV1Codec.vb`; V2/V3 y la integración con el editor siguen pendientes.
 - Estructuras, constantes y estado de datos documentados.
 - DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
   implementados.
