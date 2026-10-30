@@ -105,6 +105,31 @@ Namespace WorldEditorNet
             Return True
         End Function
 
+        Public Function ClearLayer(ByVal layer As Integer) As Boolean
+            If _document Is Nothing OrElse layer < 1 OrElse layer > 4 Then Return False
+
+            Dim replacement As Short = If(layer = 1, CShort(1), CShort(0))
+            Dim changed As Boolean = False
+            For y As Integer = 1 To 100
+                For x As Integer = 1 To 100
+                    Dim cell As MapV1Cell = _document.Cells(x, y)
+                    If GetGraphic(cell, layer) <> replacement Then
+                        SetGraphic(cell, layer, replacement)
+                        _document.Cells(x, y) = cell
+                        changed = True
+                    End If
+                Next
+            Next
+
+            If changed Then
+                _document.Changed = True
+                _hasUndo = False
+                Invalidate()
+                RaiseEvent CellEdited(Me, EventArgs.Empty)
+            End If
+            Return changed
+        End Function
+
         Public Function UndoLastEdit() As Boolean
             If _document Is Nothing OrElse Not _hasUndo Then Return False
 

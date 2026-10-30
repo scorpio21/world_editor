@@ -178,6 +178,41 @@ Namespace WorldEditorNet
             SetSelectedLayerGraphic(4)
         End Sub
 
+        Private Sub ClearLayer1MenuItem_Click(sender As Object, e As EventArgs) Handles clearLayer1MenuItem.Click
+            ClearCompleteLayer(1)
+        End Sub
+
+        Private Sub ClearLayer2MenuItem_Click(sender As Object, e As EventArgs) Handles clearLayer2MenuItem.Click
+            ClearCompleteLayer(2)
+        End Sub
+
+        Private Sub ClearLayer3MenuItem_Click(sender As Object, e As EventArgs) Handles clearLayer3MenuItem.Click
+            ClearCompleteLayer(3)
+        End Sub
+
+        Private Sub ClearLayer4MenuItem_Click(sender As Object, e As EventArgs) Handles clearLayer4MenuItem.Click
+            ClearCompleteLayer(4)
+        End Sub
+
+        Private Sub ClearCompleteLayer(ByVal layer As Integer)
+            If _document Is Nothing Then Return
+
+            Dim answer As DialogResult = MessageBox.Show(
+                Me,
+                $"¿Borrar completamente la capa {layer} en las 100x100 celdas?",
+                "Borrar capa",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning)
+            If answer <> DialogResult.Yes Then Return
+
+            If mapSurface.ClearLayer(layer) Then
+                undoMenuItem.Enabled = False
+                UpdateMapStatus($"Capa {layer} borrada")
+            Else
+                statusLabel.Text = $"La capa {layer} ya estaba vacía"
+            End If
+        End Sub
+
         Private Sub SetSelectedLayerGraphic(ByVal layer As Integer)
             If _document Is Nothing OrElse mapSurface.SelectedX < 1 Then
                 statusLabel.Text = "Selecciona una celda antes de establecer un GRH"

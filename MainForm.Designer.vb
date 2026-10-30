@@ -20,6 +20,10 @@ Namespace WorldEditorNet
         Friend WithEvents setLayer2MenuItem As ToolStripMenuItem
         Friend WithEvents setLayer3MenuItem As ToolStripMenuItem
         Friend WithEvents setLayer4MenuItem As ToolStripMenuItem
+        Friend WithEvents clearLayer1MenuItem As ToolStripMenuItem
+        Friend WithEvents clearLayer2MenuItem As ToolStripMenuItem
+        Friend WithEvents clearLayer3MenuItem As ToolStripMenuItem
+        Friend WithEvents clearLayer4MenuItem As ToolStripMenuItem
         Friend WithEvents viewMenuItem As ToolStripMenuItem
         Friend WithEvents optionsMenuItem As ToolStripMenuItem
         Friend WithEvents saveConfigMenuItem As ToolStripMenuItem
@@ -65,6 +69,10 @@ Namespace WorldEditorNet
             Me.setLayer2MenuItem = New ToolStripMenuItem()
             Me.setLayer3MenuItem = New ToolStripMenuItem()
             Me.setLayer4MenuItem = New ToolStripMenuItem()
+            Me.clearLayer1MenuItem = New ToolStripMenuItem()
+            Me.clearLayer2MenuItem = New ToolStripMenuItem()
+            Me.clearLayer3MenuItem = New ToolStripMenuItem()
+            Me.clearLayer4MenuItem = New ToolStripMenuItem()
             Me.viewMenuItem = New ToolStripMenuItem()
             Me.optionsMenuItem = New ToolStripMenuItem()
             Me.saveConfigMenuItem = New ToolStripMenuItem()
@@ -107,7 +115,9 @@ Namespace WorldEditorNet
             Me.editMenuItem.DropDownItems.AddRange(New ToolStripItem() {
                 Me.undoMenuItem, New ToolStripSeparator(), Me.toggleBlockedMenuItem,
                 New ToolStripSeparator(), Me.setLayer1MenuItem, Me.setLayer2MenuItem,
-                Me.setLayer3MenuItem, Me.setLayer4MenuItem})
+                Me.setLayer3MenuItem, Me.setLayer4MenuItem, New ToolStripSeparator(),
+                Me.clearLayer1MenuItem, Me.clearLayer2MenuItem, Me.clearLayer3MenuItem,
+                Me.clearLayer4MenuItem})
             Me.editMenuItem.Text = "Edición"
             Me.undoMenuItem.Text = "Deshacer"
             Me.undoMenuItem.Enabled = False
@@ -116,6 +126,10 @@ Namespace WorldEditorNet
             Me.setLayer2MenuItem.Text = "Establecer GRH en capa 2..."
             Me.setLayer3MenuItem.Text = "Establecer GRH en capa 3..."
             Me.setLayer4MenuItem.Text = "Establecer GRH en capa 4..."
+            Me.clearLayer1MenuItem.Text = "Borrar capa 1 completa"
+            Me.clearLayer2MenuItem.Text = "Borrar capa 2 completa"
+            Me.clearLayer3MenuItem.Text = "Borrar capa 3 completa"
+            Me.clearLayer4MenuItem.Text = "Borrar capa 4 completa"
 
             Me.viewMenuItem.DropDownItems.AddRange(New ToolStripItem() {
                 Me.layer1MenuItem, Me.layer2MenuItem, Me.layer3MenuItem,

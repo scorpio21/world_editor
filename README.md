@@ -46,6 +46,8 @@ WinForms sobre .NET 8.
   completa de edición del VB6 aún está pendiente.
 - `Edición` también permite establecer manualmente el GRH de las capas 1 a 4
   de la celda seleccionada.
+- También permite borrar una capa completa, restaurando la capa 1 a GRH `1` y
+  las capas 2–4 a `0`, después de pedir confirmación.
 - Estructuras, constantes y estado de datos documentados.
 - DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
   implementados.
