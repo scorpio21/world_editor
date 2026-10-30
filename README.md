@@ -1,0 +1,31 @@
+# WorldEditor .NET
+
+Migración progresiva del editor de mapas VB6 `AomaniaWorldEditor` a VB.NET
+WinForms sobre .NET 8.
+
+## Estado actual
+
+- Proyecto SDK-style creado y compilable con .NET 8.
+- `modDeclaraciones.bas` trasladado parcialmente a
+  `Core/LegacyDeclarations.vb`.
+- Estructuras, constantes y estado de datos documentados.
+- DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
+  implementados.
+- La ventana principal es únicamente un shell de migración.
+
+## Compilar
+
+```powershell
+dotnet restore WorldEditorNet.vbproj
+dotnet build WorldEditorNet.vbproj --configuration Release
+```
+
+## Criterio de migración
+
+Cada archivo VB6 se analiza antes de convertirse. Después de cada conversión
+se compara con el original, se documentan las funciones pendientes y se asigna
+un porcentaje de compatibilidad. El código ambiguo no se implementa hasta
+verificar su comportamiento en el editor original.
+
+La documentación de inventario y comparación se encuentra en la carpeta
+`Documentacion` del proyecto VB6 padre.
