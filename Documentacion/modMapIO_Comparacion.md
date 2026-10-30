@@ -54,3 +54,5 @@ VB6. La compatibilidad binaria debe verificarse con archivos `.map`, `.inf` y
   273, confirmando el layout de `MapaV1_Guardar`.
 - La lectura y escritura se mantienen en un codec aislado y todavía no están
   conectadas a `MainForm`.
+- `WorldEditorNet.Tests` verifica el round-trip sintético sin modificar mapas
+  reales.

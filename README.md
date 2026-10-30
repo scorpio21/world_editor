@@ -25,6 +25,8 @@ WinForms sobre .NET 8.
   verificación byte a byte.
 - El formato V1 `.map/.inf` ya está verificado y aislado en
   `Core/MapV1Codec.vb`; V2/V3 y la integración con el editor siguen pendientes.
+- La prueba `WorldEditorNet.Tests` ejecuta un round-trip V1 en un directorio
+  temporal y comprueba tamaños, cabecera y datos de una celda.
 - Estructuras, constantes y estado de datos documentados.
 - DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
   implementados.
