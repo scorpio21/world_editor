@@ -17,6 +17,9 @@ WinForms sobre .NET 8.
   `Core/GeneralUtilities.vb`: campos, rutas, INI Win32 y utilidades numéricas.
   El arranque, editor, DirectDraw y estado visual siguen separados y
   pendientes de sus dependencias.
+- `CargarMapIni` está aislado en `Core/WorldEditorSettings.vb`; carga y valida
+  las cuatro secciones de `Datos/WorldEditor.ini` sin depender todavía de
+  controles WinForms.
 - Estructuras, constantes y estado de datos documentados.
 - DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
   implementados.
