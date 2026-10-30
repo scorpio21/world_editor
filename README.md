@@ -10,6 +10,9 @@ WinForms sobre .NET 8.
   `Core/LegacyDeclarations.vb`.
 - `clsIniReader.cls` trasladado a `Core/clsIniReader.vb` con ordenación y
   búsqueda binaria.
+- `modGameIni.bas` trasladado parcialmente a `Core/GameIni.vb`: estructuras,
+  estado global e inicialización de cabecera portados; la serialización de
+  `Inicio.con` queda pendiente hasta confirmar su formato binario.
 - Estructuras, constantes y estado de datos documentados.
 - DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
   implementados.
