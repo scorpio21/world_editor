@@ -13,6 +13,10 @@ WinForms sobre .NET 8.
 - `modGameIni.bas` trasladado parcialmente a `Core/GameIni.vb`: estructuras,
   estado global e inicialización de cabecera portados; la serialización de
   `Inicio.con` queda pendiente hasta confirmar su formato binario.
+- La parte independiente de `modGeneral.bas` está en
+  `Core/GeneralUtilities.vb`: campos, rutas, INI Win32 y utilidades numéricas.
+  El arranque, editor, DirectDraw y estado visual siguen separados y
+  pendientes de sus dependencias.
 - Estructuras, constantes y estado de datos documentados.
 - DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
   implementados.
