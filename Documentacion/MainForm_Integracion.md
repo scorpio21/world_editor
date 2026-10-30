@@ -45,6 +45,10 @@ paridad visual con DirectDraw.
 - Añadido `Edición > Deshacer` para revertir la última alternancia de bloqueo.
   Esta es una adaptación inicial de un solo nivel; la pila completa de
   `Deshacer_Add`/`Deshacer_Recover` del VB6 sigue pendiente.
+- Añadidos comandos `Establecer GRH en capa 1...` hasta `capa 4...`. Cada
+  comando reproduce la modificación del `Graphic(layer).GrhIndex` de
+  `ClickEdit`, valida el rango `0..32767`, refresca la superficie y participa
+  en el deshacer de un nivel.
 - `clsIniReader` registra las páginas de códigos de .NET 8 para conservar la
   lectura ANSI/CP1252 de los INI históricos.
 
@@ -57,8 +61,9 @@ paridad visual con DirectDraw.
 - Los NPC, objetos, translados y triggers todavía no usan sus sprites originales;
   solo tienen representación textual de diagnóstico. El radar sigue pendiente.
 - Solo está migrada la edición básica explícita del bloqueo de la celda
-  seleccionada. Todavía faltan las demás herramientas de edición del VB6 y la
-  pila completa de deshacer/rehacer.
+  seleccionada y la asignación manual de GRH a las cuatro capas. Todavía
+  faltan mosaicos, autocompletado, borrado de capas, NPC, objetos,
+  translados, triggers y la pila completa de deshacer/rehacer.
 - `MapV1Document.Changed` ya se marca al editar y se limpia al cargar o
   guardar; todavía falta usarlo para preguntar automáticamente antes de crear
   otras operaciones de edición no migradas.

@@ -79,11 +79,25 @@ Namespace WorldEditorNet
             If _document Is Nothing OrElse _selectedX < 1 OrElse _selectedY < 1 Then Return False
 
             Dim cell As MapV1Cell = _document.Cells(_selectedX, _selectedY)
-            _undoX = _selectedX
-            _undoY = _selectedY
-            _undoCell = cell
-            _hasUndo = True
+            BeginUndo(cell)
             cell.Blocked = If(cell.Blocked = 0, CByte(1), CByte(0))
+            _document.Cells(_selectedX, _selectedY) = cell
+            _document.Changed = True
+            Invalidate()
+            RaiseEvent CellEdited(Me, EventArgs.Empty)
+            Return True
+        End Function
+
+        Public Function SetSelectedGraphic(ByVal layer As Integer, ByVal grhIndex As Integer) As Boolean
+            If _document Is Nothing OrElse _selectedX < 1 OrElse _selectedY < 1 Then Return False
+            If layer < 1 OrElse layer > 4 OrElse grhIndex < 0 OrElse grhIndex > Short.MaxValue Then Return False
+
+            Dim cell As MapV1Cell = _document.Cells(_selectedX, _selectedY)
+            Dim oldGrh As Integer = GetGraphic(cell, layer)
+            If oldGrh = grhIndex Then Return False
+
+            BeginUndo(cell)
+            SetGraphic(cell, layer, CShort(grhIndex))
             _document.Cells(_selectedX, _selectedY) = cell
             _document.Changed = True
             Invalidate()
@@ -106,6 +120,32 @@ Namespace WorldEditorNet
 
         Public Sub ClearUndo()
             _hasUndo = False
+        End Sub
+
+        Private Sub BeginUndo(ByVal cell As MapV1Cell)
+            _undoX = _selectedX
+            _undoY = _selectedY
+            _undoCell = cell
+            _hasUndo = True
+        End Sub
+
+        Private Shared Function GetGraphic(ByVal cell As MapV1Cell, ByVal layer As Integer) As Integer
+            Select Case layer
+                Case 1 : Return cell.Graphic1
+                Case 2 : Return cell.Graphic2
+                Case 3 : Return cell.Graphic3
+                Case 4 : Return cell.Graphic4
+                Case Else : Return -1
+            End Select
+        End Function
+
+        Private Shared Sub SetGraphic(ByRef cell As MapV1Cell, ByVal layer As Integer, ByVal grhIndex As Short)
+            Select Case layer
+                Case 1 : cell.Graphic1 = grhIndex
+                Case 2 : cell.Graphic2 = grhIndex
+                Case 3 : cell.Graphic3 = grhIndex
+                Case 4 : cell.Graphic4 = grhIndex
+            End Select
         End Sub
 
         Public Property ShowLayer1 As Boolean

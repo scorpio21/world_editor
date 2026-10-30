@@ -16,6 +16,10 @@ Namespace WorldEditorNet
         Friend WithEvents editMenuItem As ToolStripMenuItem
         Friend WithEvents undoMenuItem As ToolStripMenuItem
         Friend WithEvents toggleBlockedMenuItem As ToolStripMenuItem
+        Friend WithEvents setLayer1MenuItem As ToolStripMenuItem
+        Friend WithEvents setLayer2MenuItem As ToolStripMenuItem
+        Friend WithEvents setLayer3MenuItem As ToolStripMenuItem
+        Friend WithEvents setLayer4MenuItem As ToolStripMenuItem
         Friend WithEvents viewMenuItem As ToolStripMenuItem
         Friend WithEvents optionsMenuItem As ToolStripMenuItem
         Friend WithEvents saveConfigMenuItem As ToolStripMenuItem
@@ -57,6 +61,10 @@ Namespace WorldEditorNet
             Me.editMenuItem = New ToolStripMenuItem()
             Me.undoMenuItem = New ToolStripMenuItem()
             Me.toggleBlockedMenuItem = New ToolStripMenuItem()
+            Me.setLayer1MenuItem = New ToolStripMenuItem()
+            Me.setLayer2MenuItem = New ToolStripMenuItem()
+            Me.setLayer3MenuItem = New ToolStripMenuItem()
+            Me.setLayer4MenuItem = New ToolStripMenuItem()
             Me.viewMenuItem = New ToolStripMenuItem()
             Me.optionsMenuItem = New ToolStripMenuItem()
             Me.saveConfigMenuItem = New ToolStripMenuItem()
@@ -97,11 +105,17 @@ Namespace WorldEditorNet
             Me.exitMenuItem.Text = "Salir"
 
             Me.editMenuItem.DropDownItems.AddRange(New ToolStripItem() {
-                Me.undoMenuItem, New ToolStripSeparator(), Me.toggleBlockedMenuItem})
+                Me.undoMenuItem, New ToolStripSeparator(), Me.toggleBlockedMenuItem,
+                New ToolStripSeparator(), Me.setLayer1MenuItem, Me.setLayer2MenuItem,
+                Me.setLayer3MenuItem, Me.setLayer4MenuItem})
             Me.editMenuItem.Text = "Edición"
             Me.undoMenuItem.Text = "Deshacer"
             Me.undoMenuItem.Enabled = False
             Me.toggleBlockedMenuItem.Text = "Alternar bloqueo de la celda"
+            Me.setLayer1MenuItem.Text = "Establecer GRH en capa 1..."
+            Me.setLayer2MenuItem.Text = "Establecer GRH en capa 2..."
+            Me.setLayer3MenuItem.Text = "Establecer GRH en capa 3..."
+            Me.setLayer4MenuItem.Text = "Establecer GRH en capa 4..."
 
             Me.viewMenuItem.DropDownItems.AddRange(New ToolStripItem() {
                 Me.layer1MenuItem, Me.layer2MenuItem, Me.layer3MenuItem,

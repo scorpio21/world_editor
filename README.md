@@ -44,6 +44,8 @@ WinForms sobre .NET 8.
   deben guardarse antes de continuar.
 - `Edición > Deshacer` revierte la última alternancia de bloqueo; la pila
   completa de edición del VB6 aún está pendiente.
+- `Edición` también permite establecer manualmente el GRH de las capas 1 a 4
+  de la celda seleccionada.
 - Estructuras, constantes y estado de datos documentados.
 - DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
   implementados.

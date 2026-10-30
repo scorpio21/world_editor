@@ -162,6 +162,57 @@ Namespace WorldEditorNet
             End If
         End Sub
 
+        Private Sub SetLayer1MenuItem_Click(sender As Object, e As EventArgs) Handles setLayer1MenuItem.Click
+            SetSelectedLayerGraphic(1)
+        End Sub
+
+        Private Sub SetLayer2MenuItem_Click(sender As Object, e As EventArgs) Handles setLayer2MenuItem.Click
+            SetSelectedLayerGraphic(2)
+        End Sub
+
+        Private Sub SetLayer3MenuItem_Click(sender As Object, e As EventArgs) Handles setLayer3MenuItem.Click
+            SetSelectedLayerGraphic(3)
+        End Sub
+
+        Private Sub SetLayer4MenuItem_Click(sender As Object, e As EventArgs) Handles setLayer4MenuItem.Click
+            SetSelectedLayerGraphic(4)
+        End Sub
+
+        Private Sub SetSelectedLayerGraphic(ByVal layer As Integer)
+            If _document Is Nothing OrElse mapSurface.SelectedX < 1 Then
+                statusLabel.Text = "Selecciona una celda antes de establecer un GRH"
+                Return
+            End If
+
+            Dim current As MapV1Cell = _document.Cells(mapSurface.SelectedX, mapSurface.SelectedY)
+            Dim currentGrh As Short
+            Select Case layer
+                Case 1 : currentGrh = current.Graphic1
+                Case 2 : currentGrh = current.Graphic2
+                Case 3 : currentGrh = current.Graphic3
+                Case 4 : currentGrh = current.Graphic4
+            End Select
+
+            Dim value As String = Microsoft.VisualBasic.Interaction.InputBox(
+                $"GRH para la capa {layer}:",
+                "Establecer GRH",
+                currentGrh.ToString())
+            If String.IsNullOrWhiteSpace(value) Then Return
+
+            Dim grhIndex As Integer
+            If Not Integer.TryParse(value, grhIndex) OrElse grhIndex < 0 OrElse grhIndex > Short.MaxValue Then
+                statusLabel.Text = "El GRH debe ser un número entre 0 y 32767"
+                Return
+            End If
+
+            If mapSurface.SetSelectedGraphic(layer, grhIndex) Then
+                undoMenuItem.Enabled = True
+                UpdateMapStatus($"Capa {layer} modificada")
+            Else
+                statusLabel.Text = "El GRH no ha cambiado"
+            End If
+        End Sub
+
         Private Sub Layer1MenuItem_Click(sender As Object, e As EventArgs) Handles layer1MenuItem.Click
             ToggleViewItem(layer1MenuItem, Sub(value) mapSurface.ShowLayer1 = value)
         End Sub
