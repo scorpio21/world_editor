@@ -20,6 +20,9 @@ WinForms sobre .NET 8.
 - `CargarMapIni` está aislado en `Core/WorldEditorSettings.vb`; carga y valida
   las cuatro secciones de `Datos/WorldEditor.ini` sin depender todavía de
   controles WinForms.
+- La serialización textual `.dat` de `modMapIO.bas` está aislada en
+  `Core/MapInfoFile.vb`. Los formatos binarios `.map/.inf` siguen pendientes de
+  verificación byte a byte.
 - Estructuras, constantes y estado de datos documentados.
 - DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
   implementados.
