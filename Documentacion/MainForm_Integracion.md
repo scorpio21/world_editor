@@ -17,6 +17,10 @@ paridad visual con DirectDraw.
 - Creación de un mapa nuevo con GRH 1 en la capa 1, siguiendo `NuevoMapa`.
 - Exclusión del proyecto de pruebas de la compilación recursiva del proyecto
   principal.
+- `MainForm` carga `Datos\WorldEditor.ini` mediante `WorldEditorSettingsLoader`
+  al arrancar. Si no existe, usa los valores predeterminados; si contiene
+  rutas históricas que no existen, informa del problema en la barra de estado
+  sin cerrar el editor.
 
 ## Diferencias pendientes
 
@@ -26,6 +30,8 @@ paridad visual con DirectDraw.
 - No están migrados NPC, objetos, triggers, translados ni radar.
 - No están migrados los menús de edición ni el estado `MapInfo.Changed`.
 - No está conectado todavía `WorldEditorSettingsLoader` a `MainForm`.
+- Las opciones cargadas todavía no controlan los menús ni el render; solo se
+  ha integrado la carga segura durante el arranque.
 - No existe todavía renderer DirectDraw/GDI+ equivalente.
 - V2 y V3 siguen sin implementarse.
 

@@ -18,8 +18,8 @@ WinForms sobre .NET 8.
   El arranque, editor, DirectDraw y estado visual siguen separados y
   pendientes de sus dependencias.
 - `CargarMapIni` está aislado en `Core/WorldEditorSettings.vb`; carga y valida
-  las cuatro secciones de `Datos/WorldEditor.ini` sin depender todavía de
-  controles WinForms.
+  las cuatro secciones de `Datos/WorldEditor.ini` y `MainForm` lo ejecuta al
+  arrancar. Las opciones todavía no controlan el renderer ni los menús.
 - La serialización textual `.dat` de `modMapIO.bas` está aislada en
   `Core/MapInfoFile.vb`. Los formatos binarios `.map/.inf` siguen pendientes de
   verificación byte a byte.

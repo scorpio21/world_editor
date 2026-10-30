@@ -5,13 +5,34 @@ Namespace WorldEditorNet
     Public Partial Class MainForm
         Private _document As MapV1Document
         Private _mapPath As String = String.Empty
+        Private _settings As WorldEditorSettings
+        Private _startupMessage As String = String.Empty
 
         Public Sub New()
             InitializeComponent()
         End Sub
 
         Private Sub MainForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+            LoadSettings()
             CreateNewMap()
+        End Sub
+
+        Private Sub LoadSettings()
+            Try
+                Dim loader As New WorldEditorSettingsLoader()
+                _settings = loader.Load(AppContext.BaseDirectory)
+
+                If _settings.ConfigurationMissing Then
+                    _startupMessage = "Nuevo mapa - configuración predeterminada"
+                Else
+                    _startupMessage = "Nuevo mapa - configuración cargada"
+                End If
+            Catch ex As Exception
+                ' El editor puede abrirse aunque todavía no estén instalados los
+                ' recursos gráficos o las rutas históricas del INI.
+                _settings = Nothing
+                _startupMessage = "Nuevo mapa - configuración pendiente: " & ex.Message
+            End Try
         End Sub
 
         Private Sub NewMapMenuItem_Click(sender As Object, e As EventArgs) Handles newMapMenuItem.Click
@@ -78,7 +99,7 @@ Namespace WorldEditorNet
             _mapPath = String.Empty
             mapSurface.Document = _document
             mapSurface.ResetSelection()
-            UpdateMapStatus("Nuevo mapa")
+            UpdateMapStatus(If(String.IsNullOrWhiteSpace(_startupMessage), "Nuevo mapa", _startupMessage))
         End Sub
 
         Private Sub UpdateMapStatus(Optional message As String = "")
