@@ -30,7 +30,10 @@ WinForms sobre .NET 8.
 - `MainForm` ya tiene una superficie WinForms inicial para abrir, guardar,
   seleccionar y visualizar celdas V1; todavía no es el renderer gráfico final.
 - El menú `Ver` aplica las opciones de capas, bloqueos y cuadrícula cargadas
-  desde `WorldEditor.ini`; por ahora los GRH se representan como índices.
+  desde `WorldEditor.ini`; si falta un recurso se muestra su índice GRH.
+- `GraficosIndReader` ya lee `Graficos.ind` Integer y Long, y la superficie
+  puede recortar los BMP asociados; las animaciones aún muestran su primer
+  frame.
 - Estructuras, constantes y estado de datos documentados.
 - DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
   implementados.

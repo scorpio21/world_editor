@@ -1,6 +1,8 @@
 Imports System.Drawing
+Imports System.IO
 Imports System.Windows.Forms
 Imports WorldEditorNet.WorldEditorNet.Core
+Imports System.Collections.Generic
 
 Namespace WorldEditorNet
     Public Class MapSurfaceControl
@@ -16,6 +18,9 @@ Namespace WorldEditorNet
         Private _showLayer4 As Boolean = True
         Private _showGrid As Boolean
         Private _showBlocked As Boolean
+        Private _graphicsIndex As GraficosIndReader
+        Private _graphicsDirectory As String = String.Empty
+        Private ReadOnly _bitmapCache As New Dictionary(Of Integer, Bitmap)()
 
         Public Event CellSelected As EventHandler
 
@@ -112,6 +117,27 @@ Namespace WorldEditorNet
             End Set
         End Property
 
+        Public Property GraphicsIndex As GraficosIndReader
+            Get
+                Return _graphicsIndex
+            End Get
+            Set(value As GraficosIndReader)
+                _graphicsIndex = value
+                Invalidate()
+            End Set
+        End Property
+
+        Public Property GraphicsDirectory As String
+            Get
+                Return _graphicsDirectory
+            End Get
+            Set(value As String)
+                _graphicsDirectory = If(value, String.Empty)
+                ClearBitmapCache()
+                Invalidate()
+            End Set
+        End Property
+
         Public Sub New()
             DoubleBuffered = True
             BackColor = Color.White
@@ -136,6 +162,22 @@ Namespace WorldEditorNet
                                 Dim top As Integer = (y - 1) * _cellSize
                                 Dim cellRect As New Rectangle(left, top, _cellSize, _cellSize)
 
+                                Dim hasGraphic As Boolean = False
+                                If _document IsNot Nothing Then
+                                    Dim cell As MapV1Cell = _document.Cells(x, y)
+                                    Dim yOffset As Integer = 2
+                                    If _showLayer1 AndAlso DrawGraphic(e.Graphics, cell.Graphic1, left, top, yOffset) Then hasGraphic = True
+                                    If _showLayer2 AndAlso DrawGraphic(e.Graphics, cell.Graphic2, left, top, yOffset) Then hasGraphic = True
+                                    If _showLayer3 AndAlso DrawGraphic(e.Graphics, cell.Graphic3, left, top, yOffset) Then hasGraphic = True
+                                    If _showLayer4 AndAlso DrawGraphic(e.Graphics, cell.Graphic4, left, top, yOffset) Then hasGraphic = True
+
+                                    If Not hasGraphic AndAlso cell.Graphic1 <> 0 Then
+                                        TextRenderer.DrawText(e.Graphics, cell.Graphic1.ToString(), Font,
+                                                               New Point(left + 2, top + 2), Color.Black,
+                                                               TextFormatFlags.NoPadding)
+                                    End If
+                                End If
+
                                 If _showBlocked AndAlso _document IsNot Nothing AndAlso _document.Cells(x, y).Blocked <> 0 Then
                                     e.Graphics.FillRectangle(blockedBrush, cellRect)
                                 End If
@@ -144,14 +186,6 @@ Namespace WorldEditorNet
                                 End If
 
                                 If _showGrid Then e.Graphics.DrawRectangle(gridPen, cellRect)
-                                If _document IsNot Nothing Then
-                                    Dim cell As MapV1Cell = _document.Cells(x, y)
-                                    Dim yOffset As Integer = 2
-                                    If _showLayer1 Then DrawGraphic(e.Graphics, cell.Graphic1, left, top, yOffset)
-                                    If _showLayer2 Then DrawGraphic(e.Graphics, cell.Graphic2, left, top, yOffset)
-                                    If _showLayer3 Then DrawGraphic(e.Graphics, cell.Graphic3, left, top, yOffset)
-                                    If _showLayer4 Then DrawGraphic(e.Graphics, cell.Graphic4, left, top, yOffset)
-                                End If
                             Next
                         Next
                     End Using
@@ -159,13 +193,51 @@ Namespace WorldEditorNet
             End Using
         End Sub
 
-        Private Sub DrawGraphic(graphics As Graphics, graphic As Short,
-                                left As Integer, top As Integer, ByRef yOffset As Integer)
-            If graphic = 0 Then Return
-            TextRenderer.DrawText(graphics, graphic.ToString(), Font,
-                                   New Point(left + 2, top + yOffset), Color.Black,
-                                   TextFormatFlags.NoPadding)
+        Private Function DrawGraphic(graphics As Graphics, graphic As Short,
+                                     left As Integer, top As Integer, ByRef yOffset As Integer) As Boolean
+            If graphic = 0 OrElse _graphicsIndex Is Nothing OrElse String.IsNullOrWhiteSpace(_graphicsDirectory) Then Return False
+            Dim record As GrhIndexRecord = Nothing
+            If Not _graphicsIndex.TryGetRenderable(graphic, record) Then Return False
+            If record.FileNumber <= 0 OrElse record.Width <= 0 OrElse record.Height <= 0 Then Return False
+
+            Dim bitmap As Bitmap = GetBitmap(record.FileNumber)
+            If bitmap Is Nothing OrElse record.X < 0 OrElse record.Y < 0 OrElse
+               record.X + record.Width > bitmap.Width OrElse record.Y + record.Height > bitmap.Height Then Return False
+
+            Dim destination As New Rectangle(left, top, _cellSize, _cellSize)
+            Dim source As New Rectangle(record.X, record.Y, record.Width, record.Height)
+            graphics.DrawImage(bitmap, destination, source, GraphicsUnit.Pixel)
             yOffset += Font.Height
+            Return True
+        End Function
+
+        Private Function GetBitmap(fileNumber As Integer) As Bitmap
+            Dim cached As Bitmap = Nothing
+            If _bitmapCache.TryGetValue(fileNumber, cached) Then Return cached
+            Dim filePath As String = System.IO.Path.Combine(_graphicsDirectory, fileNumber.ToString() & ".bmp")
+            If Not File.Exists(filePath) Then filePath = System.IO.Path.Combine(_graphicsDirectory, fileNumber.ToString() & ".BMP")
+            If Not File.Exists(filePath) Then Return Nothing
+            Try
+                Using source As Image = Image.FromFile(filePath)
+                    Dim bitmap As New Bitmap(source)
+                    _bitmapCache(fileNumber) = bitmap
+                    Return bitmap
+                End Using
+            Catch
+                Return Nothing
+            End Try
+        End Function
+
+        Private Sub ClearBitmapCache()
+            For Each bitmap As Bitmap In _bitmapCache.Values
+                bitmap.Dispose()
+            Next
+            _bitmapCache.Clear()
+        End Sub
+
+        Protected Overrides Sub Dispose(disposing As Boolean)
+            If disposing Then ClearBitmapCache()
+            MyBase.Dispose(disposing)
         End Sub
 
         Protected Overrides Sub OnMouseClick(e As MouseEventArgs)

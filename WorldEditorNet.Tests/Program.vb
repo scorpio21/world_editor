@@ -1,5 +1,6 @@
 Imports System
 Imports System.IO
+Imports System.Text
 Imports WorldEditorNet.WorldEditorNet.Core
 
 Module Program
@@ -49,10 +50,43 @@ Module Program
             AssertEqual(CShort(12), actual.NpcIndex, "NPC")
             AssertEqual(CShort(33), actual.ObjIndex, "objeto")
             AssertEqual(CShort(4), actual.ObjAmount, "cantidad")
+
+            Dim indexPath As String = Path.Combine(root, "Graficos.ind")
+            WriteSyntheticGraphicsIndex(indexPath)
+            Dim graphicsIndex As GraficosIndReader = GraficosIndReader.Load(indexPath)
+            AssertEqual(2, graphicsIndex.Records.Count, "registros Graficos.ind")
+            Dim renderable As GrhIndexRecord = Nothing
+            If Not graphicsIndex.TryGetRenderable(2, renderable) Then
+                Throw New InvalidOperationException("No se resolvió la animación del GRH 2.")
+            End If
+            AssertEqual(1, renderable.FileNumber, "BMP del primer frame")
+            AssertEqual(32, renderable.Width, "ancho del primer frame")
             Console.WriteLine("MapV1Codec smoke test: OK")
         Finally
             If Directory.Exists(root) Then Directory.Delete(root, recursive:=True)
         End Try
+    End Sub
+
+    Private Sub WriteSyntheticGraphicsIndex(path As String)
+        Using stream As FileStream = File.Create(path)
+            Using writer As New BinaryWriter(stream, Encoding.Default, leaveOpen:=False)
+                writer.Write(New Byte(272) {})
+
+                writer.Write(CShort(1))
+                writer.Write(CShort(1))
+                writer.Write(CShort(1))
+                writer.Write(CShort(0))
+                writer.Write(CShort(0))
+                writer.Write(CShort(32))
+                writer.Write(CShort(32))
+
+                writer.Write(CShort(2))
+                writer.Write(CShort(2))
+                writer.Write(CShort(1))
+                writer.Write(CShort(3))
+                writer.Write(CShort(1))
+            End Using
+        End Using
     End Sub
 
     Private Sub AssertEqual(Of T)(ByVal expected As T, ByVal actual As T, ByVal name As String)

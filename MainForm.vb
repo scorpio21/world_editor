@@ -1,4 +1,5 @@
 Imports WorldEditorNet.WorldEditorNet.Core
+Imports System.IO
 Imports System.Windows.Forms
 
 Namespace WorldEditorNet
@@ -6,6 +7,7 @@ Namespace WorldEditorNet
         Private _document As MapV1Document
         Private _mapPath As String = String.Empty
         Private _settings As WorldEditorSettings
+        Private _graphicsIndex As GraficosIndReader
         Private _startupMessage As String = String.Empty
 
         Public Sub New()
@@ -14,6 +16,7 @@ Namespace WorldEditorNet
 
         Private Sub MainForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
             LoadSettings()
+            LoadGraphicsIndex()
             CreateNewMap()
         End Sub
 
@@ -32,6 +35,24 @@ Namespace WorldEditorNet
                 ' recursos gráficos o las rutas históricas del INI.
                 _settings = Nothing
                 _startupMessage = "Nuevo mapa - configuración pendiente: " & ex.Message
+            End Try
+        End Sub
+
+        Private Sub LoadGraphicsIndex()
+            If _settings Is Nothing Then Return
+            Dim indexPath As String = Path.Combine(_settings.DirIndex, "Graficos.ind")
+            If Not File.Exists(indexPath) Then
+                _startupMessage &= " - Graficos.ind no encontrado"
+                Return
+            End If
+
+            Try
+                _graphicsIndex = GraficosIndReader.Load(indexPath)
+                mapSurface.GraphicsIndex = _graphicsIndex
+                mapSurface.GraphicsDirectory = _settings.DirGraficos
+            Catch ex As Exception
+                _graphicsIndex = Nothing
+                _startupMessage &= " - índice gráfico no cargado: " & ex.Message
             End Try
         End Sub
 
@@ -127,6 +148,8 @@ Namespace WorldEditorNet
 
             _mapPath = String.Empty
             mapSurface.Document = _document
+            mapSurface.GraphicsIndex = _graphicsIndex
+            If _settings IsNot Nothing Then mapSurface.GraphicsDirectory = _settings.DirGraficos
             ApplySettingsToView()
             mapSurface.ResetSelection()
             UpdateMapStatus(If(String.IsNullOrWhiteSpace(_startupMessage), "Nuevo mapa", _startupMessage))

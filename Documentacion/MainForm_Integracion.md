@@ -24,11 +24,17 @@ paridad visual con DirectDraw.
 - El menú `Ver` ya refleja las opciones de capas 1-4, bloqueos y cuadrícula.
   La superficie aplica esos estados y muestra los GRH disponibles de las
   capas activadas como texto mientras no exista el cargador de BMP/GRH.
+- Añadido `Core/GraficosIndReader.vb`, compatible con el formato Integer de
+  `Graficos.ind` del WorldEditor y con índices Long como opción explícita.
+- La superficie intenta cargar el BMP, recorta `X`, `Y`, `Width` y `Height` y
+  reutiliza las imágenes en caché. Para una animación usa inicialmente su
+  primer frame; la reproducción temporal todavía no está migrada.
 
 ## Diferencias pendientes
 
-- No se cargan BMP ni `Graficos.ind`; por tanto, se muestran índices GRH y no
-  sprites.
+- La reproducción de animaciones no está migrada: se muestra el primer frame.
+- Si las rutas del índice o los BMP no existen, se muestran índices GRH como
+  respaldo y se informa del problema en la barra de estado.
 - No están migrados NPC, objetos, triggers, translados ni radar.
 - No están migrados los menús de edición ni el estado `MapInfo.Changed`.
 - Las opciones cargadas controlan ahora las capas, los bloqueos y la cuadrícula
