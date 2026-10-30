@@ -18,6 +18,10 @@ Namespace WorldEditorNet
         Private _showLayer4 As Boolean = True
         Private _showGrid As Boolean
         Private _showBlocked As Boolean
+        Private _showNpcs As Boolean
+        Private _showObjects As Boolean
+        Private _showTriggers As Boolean
+        Private _showTranslados As Boolean
         Private _graphicsIndex As GraficosIndReader
         Private _graphicsDirectory As String = String.Empty
         Private ReadOnly _bitmapCache As New Dictionary(Of Integer, Bitmap)()
@@ -125,6 +129,46 @@ Namespace WorldEditorNet
             End Set
         End Property
 
+        Public Property ShowNpcs As Boolean
+            Get
+                Return _showNpcs
+            End Get
+            Set(value As Boolean)
+                _showNpcs = value
+                Invalidate()
+            End Set
+        End Property
+
+        Public Property ShowObjects As Boolean
+            Get
+                Return _showObjects
+            End Get
+            Set(value As Boolean)
+                _showObjects = value
+                Invalidate()
+            End Set
+        End Property
+
+        Public Property ShowTriggers As Boolean
+            Get
+                Return _showTriggers
+            End Get
+            Set(value As Boolean)
+                _showTriggers = value
+                Invalidate()
+            End Set
+        End Property
+
+        Public Property ShowTranslados As Boolean
+            Get
+                Return _showTranslados
+            End Get
+            Set(value As Boolean)
+                _showTranslados = value
+                Invalidate()
+            End Set
+        End Property
+
         Public Property GraphicsIndex As GraficosIndReader
             Get
                 Return _graphicsIndex
@@ -186,6 +230,8 @@ Namespace WorldEditorNet
                                                                New Point(left + 2, top + 2), Color.Black,
                                                                TextFormatFlags.NoPadding)
                                     End If
+
+                                    DrawMetadataMarkers(e.Graphics, cell, left, top)
                                 End If
 
                                 If _showBlocked AndAlso _document IsNot Nothing AndAlso _document.Cells(x, y).Blocked <> 0 Then
@@ -201,6 +247,32 @@ Namespace WorldEditorNet
                     End Using
                 End Using
             End Using
+        End Sub
+
+        Private Sub DrawMetadataMarkers(graphics As Graphics, cell As MapV1Cell,
+                                        left As Integer, top As Integer)
+            Dim markerY As Integer = top + 2
+            If _showNpcs AndAlso cell.NpcIndex <> 0 Then
+                DrawMarker(graphics, "N" & cell.NpcIndex, left + 2, markerY, Color.DarkBlue)
+                markerY += Font.Height
+            End If
+            If _showObjects AndAlso cell.ObjIndex <> 0 Then
+                DrawMarker(graphics, "O" & cell.ObjIndex, left + 2, markerY, Color.DarkGreen)
+                markerY += Font.Height
+            End If
+            If _showTranslados AndAlso cell.ExitMap <> 0 Then
+                DrawMarker(graphics, "E" & cell.ExitMap, left + 2, markerY, Color.DarkMagenta)
+                markerY += Font.Height
+            End If
+            If _showTriggers AndAlso cell.Trigger <> 0 Then
+                DrawMarker(graphics, "T" & cell.Trigger, left + 2, markerY, Color.Red)
+            End If
+        End Sub
+
+        Private Sub DrawMarker(graphics As Graphics, text As String,
+                               left As Integer, top As Integer, color As Color)
+            TextRenderer.DrawText(graphics, text, Font, New Point(left, top), color,
+                                  TextFormatFlags.NoPadding)
         End Sub
 
         Private Function DrawGraphic(graphics As Graphics, graphic As Short,

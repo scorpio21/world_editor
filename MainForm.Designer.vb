@@ -20,6 +20,10 @@ Namespace WorldEditorNet
         Friend WithEvents layer4MenuItem As ToolStripMenuItem
         Friend WithEvents blockedMenuItem As ToolStripMenuItem
         Friend WithEvents gridMenuItem As ToolStripMenuItem
+        Friend WithEvents npcsMenuItem As ToolStripMenuItem
+        Friend WithEvents objectsMenuItem As ToolStripMenuItem
+        Friend WithEvents triggersMenuItem As ToolStripMenuItem
+        Friend WithEvents transladosMenuItem As ToolStripMenuItem
         Friend WithEvents mapScrollPanel As Panel
         Friend WithEvents mapSurface As MapSurfaceControl
         Friend WithEvents statusStrip1 As StatusStrip
@@ -52,6 +56,10 @@ Namespace WorldEditorNet
             Me.layer4MenuItem = New ToolStripMenuItem()
             Me.blockedMenuItem = New ToolStripMenuItem()
             Me.gridMenuItem = New ToolStripMenuItem()
+            Me.npcsMenuItem = New ToolStripMenuItem()
+            Me.objectsMenuItem = New ToolStripMenuItem()
+            Me.triggersMenuItem = New ToolStripMenuItem()
+            Me.transladosMenuItem = New ToolStripMenuItem()
             Me.mapScrollPanel = New Panel()
             Me.mapSurface = New MapSurfaceControl()
             Me.statusStrip1 = New StatusStrip()
@@ -81,13 +89,18 @@ Namespace WorldEditorNet
             Me.viewMenuItem.DropDownItems.AddRange(New ToolStripItem() {
                 Me.layer1MenuItem, Me.layer2MenuItem, Me.layer3MenuItem,
                 Me.layer4MenuItem, New ToolStripSeparator(),
-                Me.blockedMenuItem, Me.gridMenuItem})
+                Me.blockedMenuItem, Me.npcsMenuItem, Me.objectsMenuItem,
+                Me.transladosMenuItem, Me.triggersMenuItem, Me.gridMenuItem})
             Me.viewMenuItem.Text = "Ver"
             Me.layer1MenuItem.Text = "Capa 1 (piso)"
             Me.layer2MenuItem.Text = "Capa 2"
             Me.layer3MenuItem.Text = "Capa 3"
             Me.layer4MenuItem.Text = "Capa 4"
             Me.blockedMenuItem.Text = "Bloqueos"
+            Me.npcsMenuItem.Text = "NPCs"
+            Me.objectsMenuItem.Text = "Objetos"
+            Me.transladosMenuItem.Text = "Translados"
+            Me.triggersMenuItem.Text = "Triggers"
             Me.gridMenuItem.Text = "Cuadrícula"
 
             Me.mapScrollPanel.AutoScroll = True

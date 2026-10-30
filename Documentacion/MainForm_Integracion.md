@@ -31,6 +31,8 @@ paridad visual con DirectDraw.
   primer frame.
 - La superficie tiene un temporizador de 16 ms y contadores independientes por
   celda/capa para avanzar según `Speed` y volver al primer frame.
+- El menú `Ver` incluye NPCs, objetos, translados y triggers. Se dibujan como
+  marcadores de diagnóstico (`N`, `O`, `E`, `T`) usando los valores del mapa.
 
 ## Diferencias pendientes
 
@@ -38,7 +40,8 @@ paridad visual con DirectDraw.
   render VB6 y todavía necesita validación visual contra el editor original.
 - Si las rutas del índice o los BMP no existen, se muestran índices GRH como
   respaldo y se informa del problema en la barra de estado.
-- No están migrados NPC, objetos, triggers, translados ni radar.
+- Los NPC, objetos, translados y triggers todavía no usan sus sprites originales;
+  solo tienen representación textual de diagnóstico. El radar sigue pendiente.
 - No están migrados los menús de edición ni el estado `MapInfo.Changed`.
 - Las opciones cargadas controlan ahora las capas, los bloqueos y la cuadrícula
   de esta superficie inicial; todavía no controlan un renderer de sprites.

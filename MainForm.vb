@@ -119,6 +119,22 @@ Namespace WorldEditorNet
             ToggleViewItem(gridMenuItem, Sub(value) mapSurface.ShowGrid = value)
         End Sub
 
+        Private Sub NpcsMenuItem_Click(sender As Object, e As EventArgs) Handles npcsMenuItem.Click
+            ToggleViewItem(npcsMenuItem, Sub(value) mapSurface.ShowNpcs = value)
+        End Sub
+
+        Private Sub ObjectsMenuItem_Click(sender As Object, e As EventArgs) Handles objectsMenuItem.Click
+            ToggleViewItem(objectsMenuItem, Sub(value) mapSurface.ShowObjects = value)
+        End Sub
+
+        Private Sub TransladosMenuItem_Click(sender As Object, e As EventArgs) Handles transladosMenuItem.Click
+            ToggleViewItem(transladosMenuItem, Sub(value) mapSurface.ShowTranslados = value)
+        End Sub
+
+        Private Sub TriggersMenuItem_Click(sender As Object, e As EventArgs) Handles triggersMenuItem.Click
+            ToggleViewItem(triggersMenuItem, Sub(value) mapSurface.ShowTriggers = value)
+        End Sub
+
         Private Shared Sub ToggleViewItem(item As ToolStripMenuItem, apply As Action(Of Boolean))
             item.Checked = Not item.Checked
             apply(item.Checked)
@@ -162,12 +178,20 @@ Namespace WorldEditorNet
             layer3MenuItem.Checked = _settings.VerCapa3
             layer4MenuItem.Checked = _settings.VerCapa4
             blockedMenuItem.Checked = _settings.VerBloqueos
+            npcsMenuItem.Checked = _settings.VerNpcs
+            objectsMenuItem.Checked = _settings.VerObjetos
+            transladosMenuItem.Checked = _settings.VerTranslados
+            triggersMenuItem.Checked = _settings.VerTriggers
             gridMenuItem.Checked = _settings.VerGrilla
             mapSurface.ShowLayer1 = layer1MenuItem.Checked
             mapSurface.ShowLayer2 = layer2MenuItem.Checked
             mapSurface.ShowLayer3 = layer3MenuItem.Checked
             mapSurface.ShowLayer4 = layer4MenuItem.Checked
             mapSurface.ShowBlocked = blockedMenuItem.Checked
+            mapSurface.ShowNpcs = npcsMenuItem.Checked
+            mapSurface.ShowObjects = objectsMenuItem.Checked
+            mapSurface.ShowTranslados = transladosMenuItem.Checked
+            mapSurface.ShowTriggers = triggersMenuItem.Checked
             mapSurface.ShowGrid = gridMenuItem.Checked
         End Sub
 

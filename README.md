@@ -34,6 +34,8 @@ WinForms sobre .NET 8.
 - `GraficosIndReader` ya lee `Graficos.ind` Integer y Long, y la superficie
   puede recortar los BMP asociados y avanzar sus animaciones con el valor
   `Speed`; el refresco WinForms usa un temporizador de 16 ms.
+- El menú `Ver` también muestra marcadores de diagnóstico para NPCs, objetos,
+  translados y triggers según los datos de cada celda.
 - Estructuras, constantes y estado de datos documentados.
 - DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
   implementados.
