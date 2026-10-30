@@ -33,6 +33,10 @@ paridad visual con DirectDraw.
   celda/capa para avanzar según `Speed` y volver al primer frame.
 - El menú `Ver` incluye NPCs, objetos, translados y triggers. Se dibujan como
   marcadores de diagnóstico (`N`, `O`, `E`, `T`) usando los valores del mapa.
+- `Opciones > Guardar última configuración` persiste las opciones de vista,
+  rutas, última posición y último mapa en `Datos\WorldEditor.ini` al cerrar.
+- `clsIniReader` registra las páginas de códigos de .NET 8 para conservar la
+  lectura ANSI/CP1252 de los INI históricos.
 
 ## Diferencias pendientes
 
@@ -43,6 +47,7 @@ paridad visual con DirectDraw.
 - Los NPC, objetos, translados y triggers todavía no usan sus sprites originales;
   solo tienen representación textual de diagnóstico. El radar sigue pendiente.
 - No están migrados los menús de edición ni el estado `MapInfo.Changed`.
+- La edición de celdas todavía no marca ni persiste un estado `Changed`.
 - Las opciones cargadas controlan ahora las capas, los bloqueos y la cuadrícula
   de esta superficie inicial; todavía no controlan un renderer de sprites.
 - No existe todavía renderer DirectDraw/GDI+ equivalente.

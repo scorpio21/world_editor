@@ -80,6 +80,7 @@ Namespace WorldEditorNet.Core
         End Function
 
         Private Shared Function GetLegacyEncoding() As Encoding
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance)
             Dim codePage As Integer = CultureInfo.CurrentCulture.TextInfo.ANSICodePage
             If codePage <= 0 Then codePage = 1252
             Return Encoding.GetEncoding(codePage)

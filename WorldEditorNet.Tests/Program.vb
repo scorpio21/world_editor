@@ -61,6 +61,27 @@ Module Program
             End If
             AssertEqual(1, renderable.FileNumber, "BMP del primer frame")
             AssertEqual(32, renderable.Width, "ancho del primer frame")
+
+            Dim settings As New WorldEditorSettings With {
+                .GuardarConfig = True,
+                .DirGraficos = Path.Combine(root, "Graficos") & "\",
+                .DirMidi = Path.Combine(root, "MIDI") & "\",
+                .DirIndex = Path.Combine(root, "INIT") & "\",
+                .DirDats = Path.Combine(root, "DATS") & "\",
+                .MaxGrhs = 32200,
+                .VerCapa2 = True,
+                .VerGrilla = True,
+                .UserPos = New Position With {.X = 45, .Y = 66}}
+            Directory.CreateDirectory(Path.Combine(root, "Graficos"))
+            Directory.CreateDirectory(Path.Combine(root, "MIDI"))
+            Directory.CreateDirectory(Path.Combine(root, "INIT"))
+            Directory.CreateDirectory(Path.Combine(root, "DATS"))
+            WorldEditorSettingsSaver.Save(root, settings)
+            Dim loadedSettings As WorldEditorSettings = New WorldEditorSettingsLoader().Load(root)
+            AssertEqual(True, loadedSettings.GuardarConfig, "GuardarConfig")
+            AssertEqual(True, loadedSettings.VerGrilla, "Grilla")
+            AssertEqual(CShort(45), loadedSettings.UserPos.X, "posición X")
+            AssertEqual(CShort(66), loadedSettings.UserPos.Y, "posición Y")
             Console.WriteLine("MapV1Codec smoke test: OK")
         Finally
             If Directory.Exists(root) Then Directory.Delete(root, recursive:=True)

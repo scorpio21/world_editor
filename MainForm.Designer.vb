@@ -14,6 +14,8 @@ Namespace WorldEditorNet
         Friend WithEvents saveMapMenuItem As ToolStripMenuItem
         Friend WithEvents exitMenuItem As ToolStripMenuItem
         Friend WithEvents viewMenuItem As ToolStripMenuItem
+        Friend WithEvents optionsMenuItem As ToolStripMenuItem
+        Friend WithEvents saveConfigMenuItem As ToolStripMenuItem
         Friend WithEvents layer1MenuItem As ToolStripMenuItem
         Friend WithEvents layer2MenuItem As ToolStripMenuItem
         Friend WithEvents layer3MenuItem As ToolStripMenuItem
@@ -50,6 +52,8 @@ Namespace WorldEditorNet
             Me.saveMapMenuItem = New ToolStripMenuItem()
             Me.exitMenuItem = New ToolStripMenuItem()
             Me.viewMenuItem = New ToolStripMenuItem()
+            Me.optionsMenuItem = New ToolStripMenuItem()
+            Me.saveConfigMenuItem = New ToolStripMenuItem()
             Me.layer1MenuItem = New ToolStripMenuItem()
             Me.layer2MenuItem = New ToolStripMenuItem()
             Me.layer3MenuItem = New ToolStripMenuItem()
@@ -71,7 +75,7 @@ Namespace WorldEditorNet
             Me.statusStrip1.SuspendLayout()
             Me.SuspendLayout()
 
-            Me.menuStrip1.Items.AddRange(New ToolStripItem() {Me.fileMenuItem, Me.viewMenuItem})
+            Me.menuStrip1.Items.AddRange(New ToolStripItem() {Me.fileMenuItem, Me.viewMenuItem, Me.optionsMenuItem})
             Me.menuStrip1.Location = New Point(0, 0)
             Me.menuStrip1.Name = "menuStrip1"
             Me.menuStrip1.Size = New Size(1100, 24)
@@ -102,6 +106,11 @@ Namespace WorldEditorNet
             Me.transladosMenuItem.Text = "Translados"
             Me.triggersMenuItem.Text = "Triggers"
             Me.gridMenuItem.Text = "Cuadrícula"
+
+            Me.optionsMenuItem.DropDownItems.Add(Me.saveConfigMenuItem)
+            Me.optionsMenuItem.Text = "Opciones"
+            Me.saveConfigMenuItem.Text = "Guardar última configuración"
+            Me.saveConfigMenuItem.Checked = True
 
             Me.mapScrollPanel.AutoScroll = True
             Me.mapScrollPanel.BackColor = Color.DimGray

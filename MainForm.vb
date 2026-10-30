@@ -20,6 +20,23 @@ Namespace WorldEditorNet
             CreateNewMap()
         End Sub
 
+        Private Sub MainForm_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
+            If _settings Is Nothing Then Return
+            _settings.GuardarConfig = saveConfigMenuItem.Checked
+            If Not _settings.GuardarConfig Then Return
+            _settings.LastMapPath = _mapPath
+            If mapSurface.SelectedX > 0 Then
+                _settings.UserPos = New Position With {
+                    .X = CShort(mapSurface.SelectedX),
+                    .Y = CShort(mapSurface.SelectedY)}
+            End If
+            Try
+                WorldEditorSettingsSaver.Save(AppContext.BaseDirectory, _settings)
+            Catch ex As Exception
+                statusLabel.Text = "No se pudo guardar la configuración: " & ex.Message
+            End Try
+        End Sub
+
         Private Sub LoadSettings()
             Try
                 Dim loader As New WorldEditorSettingsLoader()
@@ -135,6 +152,10 @@ Namespace WorldEditorNet
             ToggleViewItem(triggersMenuItem, Sub(value) mapSurface.ShowTriggers = value)
         End Sub
 
+        Private Sub SaveConfigMenuItem_Click(sender As Object, e As EventArgs) Handles saveConfigMenuItem.Click
+            saveConfigMenuItem.Checked = Not saveConfigMenuItem.Checked
+        End Sub
+
         Private Shared Sub ToggleViewItem(item As ToolStripMenuItem, apply As Action(Of Boolean))
             item.Checked = Not item.Checked
             apply(item.Checked)
@@ -174,6 +195,7 @@ Namespace WorldEditorNet
         Private Sub ApplySettingsToView()
             If _settings Is Nothing Then Return
             layer1MenuItem.Checked = True
+            saveConfigMenuItem.Checked = _settings.GuardarConfig
             layer2MenuItem.Checked = _settings.VerCapa2
             layer3MenuItem.Checked = _settings.VerCapa3
             layer4MenuItem.Checked = _settings.VerCapa4

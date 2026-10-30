@@ -179,4 +179,44 @@ Namespace WorldEditorNet.Core
             Return value & "\"
         End Function
     End Class
+
+    Public NotInheritable Class WorldEditorSettingsSaver
+        Private Sub New()
+        End Sub
+
+        Public Shared Sub Save(ByVal appPath As String, ByVal settings As WorldEditorSettings)
+            If settings Is Nothing Then Throw New ArgumentNullException(NameOf(settings))
+            Dim root As String = Path.GetFullPath(appPath)
+            Dim dataDirectory As String = Path.Combine(root, "Datos")
+            Directory.CreateDirectory(dataDirectory)
+            Dim configurationFile As String = Path.Combine(dataDirectory, "WorldEditor.ini")
+
+            GeneralUtilities.WriteVar(configurationFile, "CONFIGURACION", "ObjTranslado", settings.ObjTranslado.ToString())
+            GeneralUtilities.WriteVar(configurationFile, "CONFIGURACION", "GuardarConfig", If(settings.GuardarConfig, "1", "0"))
+            GeneralUtilities.WriteVar(configurationFile, "CONFIGURACION", "AutoCapturarTrans", If(settings.AutoCapturarTranslados, "1", "0"))
+            GeneralUtilities.WriteVar(configurationFile, "CONFIGURACION", "AutoCapturarSup", If(settings.AutoCapturarSuperficie, "1", "0"))
+            GeneralUtilities.WriteVar(configurationFile, "CONFIGURACION", "UtilizarDeshacer", If(settings.UtilizarDeshacer, "1", "0"))
+            GeneralUtilities.WriteVar(configurationFile, "INDEX", "MaxGrhs", settings.MaxGrhs.ToString())
+            GeneralUtilities.WriteVar(configurationFile, "PATH", "UltimoMapa", settings.LastMapPath)
+            GeneralUtilities.WriteVar(configurationFile, "PATH", "DirGraficos", settings.DirGraficos)
+            GeneralUtilities.WriteVar(configurationFile, "PATH", "DirMidi", settings.DirMidi)
+            GeneralUtilities.WriteVar(configurationFile, "PATH", "DirIndex", settings.DirIndex)
+            GeneralUtilities.WriteVar(configurationFile, "PATH", "DirDats", settings.DirDats)
+            GeneralUtilities.WriteVar(configurationFile, "MOSTRAR", "LastPos", settings.UserPos.X & "-" & settings.UserPos.Y)
+            GeneralUtilities.WriteVar(configurationFile, "MOSTRAR", "ControlAutomatico", If(settings.VerAutomatico, "1", "0"))
+            GeneralUtilities.WriteVar(configurationFile, "MOSTRAR", "Capa2", If(settings.VerCapa2, "1", "0"))
+            GeneralUtilities.WriteVar(configurationFile, "MOSTRAR", "Capa3", If(settings.VerCapa3, "1", "0"))
+            GeneralUtilities.WriteVar(configurationFile, "MOSTRAR", "Capa4", If(settings.VerCapa4, "1", "0"))
+            GeneralUtilities.WriteVar(configurationFile, "MOSTRAR", "Translados", If(settings.VerTranslados, "1", "0"))
+            GeneralUtilities.WriteVar(configurationFile, "MOSTRAR", "Objetos", If(settings.VerObjetos, "1", "0"))
+            GeneralUtilities.WriteVar(configurationFile, "MOSTRAR", "NPCs", If(settings.VerNpcs, "1", "0"))
+            GeneralUtilities.WriteVar(configurationFile, "MOSTRAR", "Triggers", If(settings.VerTriggers, "1", "0"))
+            GeneralUtilities.WriteVar(configurationFile, "MOSTRAR", "Grilla", If(settings.VerGrilla, "1", "0"))
+            GeneralUtilities.WriteVar(configurationFile, "MOSTRAR", "Bloqueos", If(settings.VerBloqueos, "1", "0"))
+            GeneralUtilities.WriteVar(configurationFile, "MOSTRAR", "PantallaX", settings.PantallaX.ToString())
+            GeneralUtilities.WriteVar(configurationFile, "MOSTRAR", "PantallaY", settings.PantallaY.ToString())
+            GeneralUtilities.WriteVar(configurationFile, "MOSTRAR", "ClienteHeight", settings.ClienteHeight.ToString())
+            GeneralUtilities.WriteVar(configurationFile, "MOSTRAR", "ClienteWidth", settings.ClienteWidth.ToString())
+        End Sub
+    End Class
 End Namespace

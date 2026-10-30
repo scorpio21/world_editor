@@ -36,6 +36,8 @@ WinForms sobre .NET 8.
   `Speed`; el refresco WinForms usa un temporizador de 16 ms.
 - El menú `Ver` también muestra marcadores de diagnóstico para NPCs, objetos,
   translados y triggers según los datos de cada celda.
+- `Opciones > Guardar última configuración` guarda la configuración y la
+  posición/mapa reciente en `Datos/WorldEditor.ini` al cerrar.
 - Estructuras, constantes y estado de datos documentados.
 - DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
   implementados.
