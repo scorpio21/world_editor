@@ -42,6 +42,8 @@ WinForms sobre .NET 8.
   celda seleccionada y marca el documento como modificado (`Changed`).
 - Si hay cambios sin guardar, `Nuevo mapa`, `Abrir mapa` y cerrar preguntan si
   deben guardarse antes de continuar.
+- `Edición > Deshacer` revierte la última alternancia de bloqueo; la pila
+  completa de edición del VB6 aún está pendiente.
 - Estructuras, constantes y estado de datos documentados.
 - DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
   implementados.

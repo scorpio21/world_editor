@@ -42,6 +42,9 @@ paridad visual con DirectDraw.
   cerrar la ventana muestran una confirmación `Sí/No/Cancelar`. `Sí` guarda
   usando el flujo normal, `No` continúa sin guardar y `Cancelar` detiene la
   operación.
+- Añadido `Edición > Deshacer` para revertir la última alternancia de bloqueo.
+  Esta es una adaptación inicial de un solo nivel; la pila completa de
+  `Deshacer_Add`/`Deshacer_Recover` del VB6 sigue pendiente.
 - `clsIniReader` registra las páginas de códigos de .NET 8 para conservar la
   lectura ANSI/CP1252 de los INI históricos.
 
@@ -54,8 +57,8 @@ paridad visual con DirectDraw.
 - Los NPC, objetos, translados y triggers todavía no usan sus sprites originales;
   solo tienen representación textual de diagnóstico. El radar sigue pendiente.
 - Solo está migrada la edición básica explícita del bloqueo de la celda
-  seleccionada. Todavía faltan las demás herramientas de edición del VB6,
-  deshacer/rehacer y los diálogos de confirmación asociados.
+  seleccionada. Todavía faltan las demás herramientas de edición del VB6 y la
+  pila completa de deshacer/rehacer.
 - `MapV1Document.Changed` ya se marca al editar y se limpia al cargar o
   guardar; todavía falta usarlo para preguntar automáticamente antes de crear
   otras operaciones de edición no migradas.

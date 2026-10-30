@@ -91,6 +91,7 @@ Namespace WorldEditorNet
                 _document = codec.Load(openMapDialog.FileName)
                 _mapPath = openMapDialog.FileName
                 mapSurface.Document = _document
+                undoMenuItem.Enabled = False
                 UpdateMapStatus()
             Catch ex As Exception
                 MessageBox.Show(Me, ex.Message, "No se pudo abrir el mapa",
@@ -147,9 +148,17 @@ Namespace WorldEditorNet
 
         Private Sub ToggleBlockedMenuItem_Click(sender As Object, e As EventArgs) Handles toggleBlockedMenuItem.Click
             If mapSurface.ToggleSelectedBlocked() Then
+                undoMenuItem.Enabled = True
                 UpdateMapStatus("Mapa modificado: bloqueo alternado")
             Else
                 statusLabel.Text = "Selecciona una celda antes de editarla"
+            End If
+        End Sub
+
+        Private Sub UndoMenuItem_Click(sender As Object, e As EventArgs) Handles undoMenuItem.Click
+            If mapSurface.UndoLastEdit() Then
+                undoMenuItem.Enabled = False
+                UpdateMapStatus("Última edición deshecha")
             End If
         End Sub
 
@@ -231,6 +240,7 @@ Namespace WorldEditorNet
 
             _mapPath = String.Empty
             mapSurface.Document = _document
+            undoMenuItem.Enabled = False
             mapSurface.GraphicsIndex = _graphicsIndex
             If _settings IsNot Nothing Then mapSurface.GraphicsDirectory = _settings.DirGraficos
             ApplySettingsToView()

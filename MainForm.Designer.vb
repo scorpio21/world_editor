@@ -14,6 +14,7 @@ Namespace WorldEditorNet
         Friend WithEvents saveMapMenuItem As ToolStripMenuItem
         Friend WithEvents exitMenuItem As ToolStripMenuItem
         Friend WithEvents editMenuItem As ToolStripMenuItem
+        Friend WithEvents undoMenuItem As ToolStripMenuItem
         Friend WithEvents toggleBlockedMenuItem As ToolStripMenuItem
         Friend WithEvents viewMenuItem As ToolStripMenuItem
         Friend WithEvents optionsMenuItem As ToolStripMenuItem
@@ -54,6 +55,7 @@ Namespace WorldEditorNet
             Me.saveMapMenuItem = New ToolStripMenuItem()
             Me.exitMenuItem = New ToolStripMenuItem()
             Me.editMenuItem = New ToolStripMenuItem()
+            Me.undoMenuItem = New ToolStripMenuItem()
             Me.toggleBlockedMenuItem = New ToolStripMenuItem()
             Me.viewMenuItem = New ToolStripMenuItem()
             Me.optionsMenuItem = New ToolStripMenuItem()
@@ -94,8 +96,11 @@ Namespace WorldEditorNet
             Me.saveMapMenuItem.Text = "Guardar mapa"
             Me.exitMenuItem.Text = "Salir"
 
-            Me.editMenuItem.DropDownItems.Add(Me.toggleBlockedMenuItem)
+            Me.editMenuItem.DropDownItems.AddRange(New ToolStripItem() {
+                Me.undoMenuItem, New ToolStripSeparator(), Me.toggleBlockedMenuItem})
             Me.editMenuItem.Text = "Edición"
+            Me.undoMenuItem.Text = "Deshacer"
+            Me.undoMenuItem.Enabled = False
             Me.toggleBlockedMenuItem.Text = "Alternar bloqueo de la celda"
 
             Me.viewMenuItem.DropDownItems.AddRange(New ToolStripItem() {

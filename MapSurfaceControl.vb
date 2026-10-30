@@ -12,6 +12,10 @@ Namespace WorldEditorNet
         Private _cellSize As Integer = 24
         Private _selectedX As Integer
         Private _selectedY As Integer
+        Private _undoX As Integer
+        Private _undoY As Integer
+        Private _undoCell As MapV1Cell
+        Private _hasUndo As Boolean
         Private _showLayer1 As Boolean = True
         Private _showLayer2 As Boolean = True
         Private _showLayer3 As Boolean = True
@@ -43,6 +47,7 @@ Namespace WorldEditorNet
             End Get
             Set(value As MapV1Document)
                 _document = value
+                _hasUndo = False
                 Invalidate()
             End Set
         End Property
@@ -74,6 +79,10 @@ Namespace WorldEditorNet
             If _document Is Nothing OrElse _selectedX < 1 OrElse _selectedY < 1 Then Return False
 
             Dim cell As MapV1Cell = _document.Cells(_selectedX, _selectedY)
+            _undoX = _selectedX
+            _undoY = _selectedY
+            _undoCell = cell
+            _hasUndo = True
             cell.Blocked = If(cell.Blocked = 0, CByte(1), CByte(0))
             _document.Cells(_selectedX, _selectedY) = cell
             _document.Changed = True
@@ -81,6 +90,23 @@ Namespace WorldEditorNet
             RaiseEvent CellEdited(Me, EventArgs.Empty)
             Return True
         End Function
+
+        Public Function UndoLastEdit() As Boolean
+            If _document Is Nothing OrElse Not _hasUndo Then Return False
+
+            _document.Cells(_undoX, _undoY) = _undoCell
+            _selectedX = _undoX
+            _selectedY = _undoY
+            _document.Changed = True
+            _hasUndo = False
+            Invalidate()
+            RaiseEvent CellEdited(Me, EventArgs.Empty)
+            Return True
+        End Function
+
+        Public Sub ClearUndo()
+            _hasUndo = False
+        End Sub
 
         Public Property ShowLayer1 As Boolean
             Get
