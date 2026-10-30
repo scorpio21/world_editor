@@ -28,11 +28,14 @@ paridad visual con DirectDraw.
   `Graficos.ind` del WorldEditor y con índices Long como opción explícita.
 - La superficie intenta cargar el BMP, recorta `X`, `Y`, `Width` y `Height` y
   reutiliza las imágenes en caché. Para una animación usa inicialmente su
-  primer frame; la reproducción temporal todavía no está migrada.
+  primer frame.
+- La superficie tiene un temporizador de 16 ms y contadores independientes por
+  celda/capa para avanzar según `Speed` y volver al primer frame.
 
 ## Diferencias pendientes
 
-- La reproducción de animaciones no está migrada: se muestra el primer frame.
+- El intervalo de refresco de 16 ms es la adaptación WinForms del bucle de
+  render VB6 y todavía necesita validación visual contra el editor original.
 - Si las rutas del índice o los BMP no existen, se muestran índices GRH como
   respaldo y se informa del problema en la barra de estado.
 - No están migrados NPC, objetos, triggers, translados ni radar.

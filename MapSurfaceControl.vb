@@ -21,6 +21,14 @@ Namespace WorldEditorNet
         Private _graphicsIndex As GraficosIndReader
         Private _graphicsDirectory As String = String.Empty
         Private ReadOnly _bitmapCache As New Dictionary(Of Integer, Bitmap)()
+        Private ReadOnly _animationStates As New Dictionary(Of Integer, AnimationState)()
+        Private ReadOnly _animationTimer As New Timer With {.Interval = 16}
+
+        Private NotInheritable Class AnimationState
+            Public Property GrhIndex As Integer
+            Public Property FrameNumber As Integer = 1
+            Public Property SpeedCounter As Integer
+        End Class
 
         Public Event CellSelected As EventHandler
 
@@ -143,6 +151,8 @@ Namespace WorldEditorNet
             BackColor = Color.White
             TabStop = True
             UpdateSurfaceSize()
+            AddHandler _animationTimer.Tick, AddressOf AnimationTimer_Tick
+            _animationTimer.Start()
         End Sub
 
         Public Sub ResetSelection()
@@ -166,10 +176,10 @@ Namespace WorldEditorNet
                                 If _document IsNot Nothing Then
                                     Dim cell As MapV1Cell = _document.Cells(x, y)
                                     Dim yOffset As Integer = 2
-                                    If _showLayer1 AndAlso DrawGraphic(e.Graphics, cell.Graphic1, left, top, yOffset) Then hasGraphic = True
-                                    If _showLayer2 AndAlso DrawGraphic(e.Graphics, cell.Graphic2, left, top, yOffset) Then hasGraphic = True
-                                    If _showLayer3 AndAlso DrawGraphic(e.Graphics, cell.Graphic3, left, top, yOffset) Then hasGraphic = True
-                                    If _showLayer4 AndAlso DrawGraphic(e.Graphics, cell.Graphic4, left, top, yOffset) Then hasGraphic = True
+                                    If _showLayer1 AndAlso DrawGraphic(e.Graphics, cell.Graphic1, x, y, 1, left, top, yOffset) Then hasGraphic = True
+                                    If _showLayer2 AndAlso DrawGraphic(e.Graphics, cell.Graphic2, x, y, 2, left, top, yOffset) Then hasGraphic = True
+                                    If _showLayer3 AndAlso DrawGraphic(e.Graphics, cell.Graphic3, x, y, 3, left, top, yOffset) Then hasGraphic = True
+                                    If _showLayer4 AndAlso DrawGraphic(e.Graphics, cell.Graphic4, x, y, 4, left, top, yOffset) Then hasGraphic = True
 
                                     If Not hasGraphic AndAlso cell.Graphic1 <> 0 Then
                                         TextRenderer.DrawText(e.Graphics, cell.Graphic1.ToString(), Font,
@@ -194,10 +204,13 @@ Namespace WorldEditorNet
         End Sub
 
         Private Function DrawGraphic(graphics As Graphics, graphic As Short,
+                                     cellX As Integer, cellY As Integer, layer As Integer,
                                      left As Integer, top As Integer, ByRef yOffset As Integer) As Boolean
             If graphic = 0 OrElse _graphicsIndex Is Nothing OrElse String.IsNullOrWhiteSpace(_graphicsDirectory) Then Return False
             Dim record As GrhIndexRecord = Nothing
-            If Not _graphicsIndex.TryGetRenderable(graphic, record) Then Return False
+            Dim stateKey As Integer = ((cellY - 1) * 100 + (cellX - 1)) * 4 + layer
+            Dim state As AnimationState = GetAnimationState(stateKey, graphic)
+            If Not _graphicsIndex.TryGetFrame(graphic, state.FrameNumber, record) Then Return False
             If record.FileNumber <= 0 OrElse record.Width <= 0 OrElse record.Height <= 0 Then Return False
 
             Dim bitmap As Bitmap = GetBitmap(record.FileNumber)
@@ -210,6 +223,31 @@ Namespace WorldEditorNet
             yOffset += Font.Height
             Return True
         End Function
+
+        Private Function GetAnimationState(key As Integer, graphic As Integer) As AnimationState
+            Dim state As AnimationState = Nothing
+            If Not _animationStates.TryGetValue(key, state) OrElse state.GrhIndex <> graphic Then
+                state = New AnimationState With {.GrhIndex = graphic, .FrameNumber = 1, .SpeedCounter = 0}
+                _animationStates(key) = state
+            End If
+            Return state
+        End Function
+
+        Private Sub AnimationTimer_Tick(sender As Object, e As EventArgs)
+            If _graphicsIndex Is Nothing Then Return
+            For Each state As AnimationState In _animationStates.Values
+                Dim parent As GrhIndexRecord = Nothing
+                If Not _graphicsIndex.Records.TryGetValue(state.GrhIndex, parent) OrElse Not parent.IsAnimation Then Continue For
+                If state.SpeedCounter > 0 Then
+                    state.SpeedCounter -= 1
+                Else
+                    state.SpeedCounter = Math.Max(1, parent.Speed)
+                    state.FrameNumber += 1
+                    If state.FrameNumber > parent.Frames.Count Then state.FrameNumber = 1
+                End If
+            Next
+            Invalidate()
+        End Sub
 
         Private Function GetBitmap(fileNumber As Integer) As Bitmap
             Dim cached As Bitmap = Nothing
@@ -236,7 +274,12 @@ Namespace WorldEditorNet
         End Sub
 
         Protected Overrides Sub Dispose(disposing As Boolean)
-            If disposing Then ClearBitmapCache()
+            If disposing Then
+                _animationTimer.Stop()
+                RemoveHandler _animationTimer.Tick, AddressOf AnimationTimer_Tick
+                _animationTimer.Dispose()
+                ClearBitmapCache()
+            End If
             MyBase.Dispose(disposing)
         End Sub
 

@@ -85,11 +85,21 @@ Namespace WorldEditorNet.Core
         End Function
 
         Public Function TryGetRenderable(grh As Integer, ByRef record As GrhIndexRecord) As Boolean
+            Return TryGetFrame(grh, 1, record)
+        End Function
+
+        Public Function TryGetFrame(grh As Integer, frameNumber As Integer,
+                                    ByRef record As GrhIndexRecord) As Boolean
             record = Nothing
-            If Not Records.TryGetValue(grh, record) Then Return False
-            If Not record.IsAnimation Then Return True
-            If record.Frames.Count = 0 Then Return False
-            Return Records.TryGetValue(record.Frames(0), record)
+            Dim parent As GrhIndexRecord = Nothing
+            If Not Records.TryGetValue(grh, parent) Then Return False
+            If Not parent.IsAnimation Then
+                record = parent
+                Return True
+            End If
+            If parent.Frames.Count = 0 Then Return False
+            Dim index As Integer = Math.Max(1, Math.Min(frameNumber, parent.Frames.Count))
+            Return Records.TryGetValue(parent.Frames(index - 1), record)
         End Function
 
         Private Shared Function ReadIndex(reader As BinaryReader,
