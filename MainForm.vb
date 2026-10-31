@@ -1,4 +1,5 @@
 Imports WorldEditorNet.WorldEditorNet.Core
+Imports System.Drawing
 Imports System.IO
 Imports System.Windows.Forms
 
@@ -13,6 +14,62 @@ Namespace WorldEditorNet
 
         Public Sub New()
             InitializeComponent()
+        End Sub
+
+        Private Sub ConfigurePanelButton(button As LegacyPanelButton, caption As String, index As Integer)
+            Dim widths() As Integer = {130, 130, 130, 130, 145, 130, 130}
+            Dim left As Integer = 4
+            For i As Integer = 0 To index - 1
+                left += widths(i) + 2
+            Next
+
+            button.Name = $"selectPanel{index}"
+            button.Text = caption
+            button.Size = New Size(widths(index), 64)
+            button.Location = New Point(left, 3)
+            button.Selected = (index = 0)
+            button.TabIndex = index
+        End Sub
+
+        Private Sub SurfacePanelButton_Click(sender As Object, e As EventArgs) Handles surfacePanelButton.Click
+            SelectPanelMode(0, "Superficie")
+        End Sub
+
+        Private Sub TransfersPanelButton_Click(sender As Object, e As EventArgs) Handles transfersPanelButton.Click
+            SelectPanelMode(1, "Translados")
+        End Sub
+
+        Private Sub BlockedPanelButton_Click(sender As Object, e As EventArgs) Handles blockedPanelButton.Click
+            SelectPanelMode(2, "Bloqueos")
+        End Sub
+
+        Private Sub NpcsPanelButton_Click(sender As Object, e As EventArgs) Handles npcsPanelButton.Click
+            SelectPanelMode(3, "NPC's")
+        End Sub
+
+        Private Sub HostileNpcsPanelButton_Click(sender As Object, e As EventArgs) Handles hostileNpcsPanelButton.Click
+            SelectPanelMode(4, "NPC's Hostiles")
+        End Sub
+
+        Private Sub ObjectsPanelButton_Click(sender As Object, e As EventArgs) Handles objectsPanelButton.Click
+            SelectPanelMode(5, "Objetos")
+        End Sub
+
+        Private Sub TriggersPanelButton_Click(sender As Object, e As EventArgs) Handles triggersPanelButton.Click
+            SelectPanelMode(6, "Trigger's")
+        End Sub
+
+        Private Sub SelectPanelMode(index As Integer, caption As String)
+            For Each button As LegacyPanelButton In {
+                surfacePanelButton, transfersPanelButton, blockedPanelButton,
+                npcsPanelButton, hostileNpcsPanelButton, objectsPanelButton,
+                triggersPanelButton}
+                button.Selected = False
+            Next
+
+            Dim selected = DirectCast(functionBarPanel.Controls(index), LegacyPanelButton)
+            selected.Selected = True
+            statusLabel.Text = $"Panel seleccionado: {caption} (F{If(index < 5, index + 5, If(index = 5, 11, 12))})"
         End Sub
 
         Private Sub MainForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load

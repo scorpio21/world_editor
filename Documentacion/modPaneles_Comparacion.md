@@ -46,3 +46,12 @@ controles y datos asociados. Activarlas ahora produciría una acción vacía y n
 sería fiel al comportamiento original. El siguiente trabajo debe crear los
 paneles WinForms en el diseñador y conectarlos después a `VerFuncion` y
 `EstSelectPanel`; no se sustituirán por cuadros de diálogo improvisados.
+
+## Primer paso implementado
+
+Se añadió `LegacyPanelButton.vb`, un control WinForms editable desde el
+diseñador que reproduce la parte visual común de `lvButtons_H`: forma
+diagonal, gradiente, hover, pulsación, selección y propiedad de imagen. La
+barra superior de `MainForm` ya contiene los siete controles equivalentes.
+La imagen de cada botón queda pendiente de extraerse de `frmMain.frx` para
+conservar los recursos originales.

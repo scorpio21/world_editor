@@ -51,6 +51,14 @@ Namespace WorldEditorNet
         Friend WithEvents transladosMenuItem As ToolStripMenuItem
         Friend WithEvents mapScrollPanel As Panel
         Friend WithEvents mapSurface As MapSurfaceControl
+        Friend WithEvents functionBarPanel As Panel
+        Friend WithEvents surfacePanelButton As LegacyPanelButton
+        Friend WithEvents transfersPanelButton As LegacyPanelButton
+        Friend WithEvents blockedPanelButton As LegacyPanelButton
+        Friend WithEvents npcsPanelButton As LegacyPanelButton
+        Friend WithEvents hostileNpcsPanelButton As LegacyPanelButton
+        Friend WithEvents objectsPanelButton As LegacyPanelButton
+        Friend WithEvents triggersPanelButton As LegacyPanelButton
         Friend WithEvents statusStrip1 As StatusStrip
         Friend WithEvents statusLabel As ToolStripStatusLabel
         Friend WithEvents openMapDialog As OpenFileDialog
@@ -112,12 +120,21 @@ Namespace WorldEditorNet
             Me.transladosMenuItem = New ToolStripMenuItem()
             Me.mapScrollPanel = New Panel()
             Me.mapSurface = New MapSurfaceControl()
+            Me.functionBarPanel = New Panel()
+            Me.surfacePanelButton = New LegacyPanelButton()
+            Me.transfersPanelButton = New LegacyPanelButton()
+            Me.blockedPanelButton = New LegacyPanelButton()
+            Me.npcsPanelButton = New LegacyPanelButton()
+            Me.hostileNpcsPanelButton = New LegacyPanelButton()
+            Me.objectsPanelButton = New LegacyPanelButton()
+            Me.triggersPanelButton = New LegacyPanelButton()
             Me.statusStrip1 = New StatusStrip()
             Me.statusLabel = New ToolStripStatusLabel()
             Me.openMapDialog = New OpenFileDialog()
             Me.saveMapDialog = New SaveFileDialog()
             Me.menuStrip1.SuspendLayout()
             Me.mapScrollPanel.SuspendLayout()
+            Me.functionBarPanel.SuspendLayout()
             Me.statusStrip1.SuspendLayout()
             Me.SuspendLayout()
 
@@ -246,6 +263,24 @@ Namespace WorldEditorNet
             verticalMenuItem.DropDownItems.AddRange(New ToolStripItem() {New ToolStripMenuItem("&Chico") With {.Checked = True, .Enabled = False}, New ToolStripMenuItem("&Mediano") With {.Enabled = False}, New ToolStripMenuItem("&Grande") With {.Enabled = False}})
             Me.screenMenuItem.DropDownItems.AddRange(New ToolStripItem() {horizontalMenuItem, verticalMenuItem})
 
+            Me.functionBarPanel.BackColor = Color.FromArgb(190, 245, 226)
+            Me.functionBarPanel.Dock = DockStyle.Top
+            Me.functionBarPanel.Height = 70
+            Me.functionBarPanel.Name = "functionBarPanel"
+            Me.functionBarPanel.Padding = New Padding(4, 3, 4, 3)
+            Me.functionBarPanel.TabIndex = 2
+            ConfigurePanelButton(Me.surfacePanelButton, "Superficie" & Environment.NewLine & "(F5)", 0)
+            ConfigurePanelButton(Me.transfersPanelButton, "Translados" & Environment.NewLine & "(F6)", 1)
+            ConfigurePanelButton(Me.blockedPanelButton, "Bloqueos (F7)", 2)
+            ConfigurePanelButton(Me.npcsPanelButton, "NPC's (F8)", 3)
+            ConfigurePanelButton(Me.hostileNpcsPanelButton, "NPC's" & Environment.NewLine & "Hostiles (F9)", 4)
+            ConfigurePanelButton(Me.objectsPanelButton, "Objetos (F11)", 5)
+            ConfigurePanelButton(Me.triggersPanelButton, "Trigger's (F12)", 6)
+            Me.functionBarPanel.Controls.AddRange(New Control() {
+                Me.surfacePanelButton, Me.transfersPanelButton, Me.blockedPanelButton,
+                Me.npcsPanelButton, Me.hostileNpcsPanelButton, Me.objectsPanelButton,
+                Me.triggersPanelButton})
+
             Me.mapScrollPanel.AutoScroll = True
             Me.mapScrollPanel.BackColor = Color.DimGray
             Me.mapScrollPanel.Controls.Add(Me.mapSurface)
@@ -274,6 +309,7 @@ Namespace WorldEditorNet
             Me.ClientSize = New Size(1100, 600)
             Me.Controls.Add(Me.mapScrollPanel)
             Me.Controls.Add(Me.statusStrip1)
+            Me.Controls.Add(Me.functionBarPanel)
             Me.Controls.Add(Me.menuStrip1)
             Me.MainMenuStrip = Me.menuStrip1
             Me.Name = "MainForm"
@@ -281,6 +317,7 @@ Namespace WorldEditorNet
             Me.menuStrip1.ResumeLayout(False)
             Me.menuStrip1.PerformLayout()
             Me.mapScrollPanel.ResumeLayout(False)
+            Me.functionBarPanel.ResumeLayout(False)
             Me.statusStrip1.ResumeLayout(False)
             Me.statusStrip1.PerformLayout()
             Me.ResumeLayout(False)

@@ -12,6 +12,8 @@ comportamiento comprobado y sin inventar equivalencias.
 - ✅ Render WinForms inicial con capas, bloqueos, cuadrícula y marcadores.
 - ✅ Barra de menús con la jerarquía declarada en `Codigo/frmMain.frm`.
 - ✅ Auditoría inicial de `modPaneles.bas`.
+- ✅ Control WinForms `LegacyPanelButton` y barra superior con siete paneles
+  diagonales, gradiente, hover, selección y clic.
 - ⚠️ Paneles F5–F12 y controles de translados/NPCs/objetos/triggers aún no
   tienen equivalentes WinForms; sus entradas se mantienen deshabilitadas.
 - ⚠️ DirectDraw, V2/V3, radar y sprites completos siguen pendientes.
@@ -34,6 +36,6 @@ Resultado verificado: ambos builds sin errores ni advertencias y
 
 ## Siguiente paso
 
-Diseñar en WinForms los paneles equivalentes a F5–F12 a partir de los
-controles declarados en `Codigo/frmMain.frm`; después conectar su visibilidad
-con una adaptación verificable de `VerFuncion` y `EstSelectPanel`.
+Extraer de `frmMain.frx` los siete iconos originales y asignarlos desde el
+diseñador; después conectar la visibilidad de los paneles WinForms con una
+adaptación verificable de `VerFuncion` y `EstSelectPanel`.
