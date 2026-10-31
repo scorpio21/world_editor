@@ -54,6 +54,8 @@ WinForms sobre .NET 8.
   y permite mosaico, ancho/largo y desplazamiento X/Y.
 - `Edición > Pintar celda seleccionada...` aplica un GRH base y el patrón
   configurado a una celda concreta.
+- `Edición > Activar pincel...` permite pintar arrastrando sobre el mapa con
+  una capa y un GRH base.
 - Estructuras, constantes y estado de datos documentados.
 - DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
   implementados.

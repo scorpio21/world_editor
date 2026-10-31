@@ -16,6 +16,10 @@ Namespace WorldEditorNet
         Private _undoY As Integer
         Private _undoCell As MapV1Cell
         Private _hasUndo As Boolean
+        Private _brushEnabled As Boolean
+        Private _brushLayer As Integer
+        Private _brushBaseGrh As Integer
+        Private _brushSettings As SurfacePatternSettings
         Private _showLayer1 As Boolean = True
         Private _showLayer2 As Boolean = True
         Private _showLayer3 As Boolean = True
@@ -40,6 +44,27 @@ Namespace WorldEditorNet
 
         Public Event CellSelected As EventHandler
         Public Event CellEdited As EventHandler
+
+        Public Property BrushEnabled As Boolean
+            Get
+                Return _brushEnabled
+            End Get
+            Set(value As Boolean)
+                _brushEnabled = value
+                If Not value Then Capture = False
+            End Set
+        End Property
+
+        Public Sub ConfigureBrush(ByVal layer As Integer,
+                                  ByVal baseGrh As Integer,
+                                  ByVal settings As SurfacePatternSettings)
+            If layer < 1 OrElse layer > 4 Then Throw New ArgumentOutOfRangeException(NameOf(layer))
+            If baseGrh < 0 OrElse baseGrh > Short.MaxValue Then Throw New ArgumentOutOfRangeException(NameOf(baseGrh))
+            _brushLayer = layer
+            _brushBaseGrh = baseGrh
+            _brushSettings = settings
+            _brushEnabled = True
+        End Sub
 
         Public Property Document As MapV1Document
             Get
@@ -552,15 +577,45 @@ Namespace WorldEditorNet
         Protected Overrides Sub OnMouseClick(e As MouseEventArgs)
             MyBase.OnMouseClick(e)
             If e.Button <> MouseButtons.Left Then Return
+            SelectCellAt(e.X, e.Y, _brushEnabled)
+        End Sub
 
-            Dim x As Integer = (e.X \ _cellSize) + 1
-            Dim y As Integer = (e.Y \ _cellSize) + 1
+        Protected Overrides Sub OnMouseDown(e As MouseEventArgs)
+            MyBase.OnMouseDown(e)
+            If e.Button = MouseButtons.Left AndAlso _brushEnabled Then
+                Capture = True
+                SelectCellAt(e.X, e.Y, paint:=True)
+            End If
+        End Sub
+
+        Protected Overrides Sub OnMouseMove(e As MouseEventArgs)
+            MyBase.OnMouseMove(e)
+            If _brushEnabled AndAlso e.Button = MouseButtons.Left Then
+                SelectCellAt(e.X, e.Y, paint:=True)
+            End If
+        End Sub
+
+        Protected Overrides Sub OnMouseUp(e As MouseEventArgs)
+            MyBase.OnMouseUp(e)
+            If e.Button = MouseButtons.Left Then Capture = False
+        End Sub
+
+        Private Sub SelectCellAt(ByVal pixelX As Integer,
+                                 ByVal pixelY As Integer,
+                                 ByVal paint As Boolean)
+            Dim x As Integer = (pixelX \ _cellSize) + 1
+            Dim y As Integer = (pixelY \ _cellSize) + 1
             If x < 1 OrElse x > 100 OrElse y < 1 OrElse y > 100 Then Return
 
+            Dim changedCell As Boolean = _selectedX <> x OrElse _selectedY <> y
             _selectedX = x
             _selectedY = y
             Invalidate()
             RaiseEvent CellSelected(Me, EventArgs.Empty)
+
+            If paint AndAlso _brushEnabled AndAlso _brushSettings IsNot Nothing Then
+                SetSelectedGraphicWithPattern(_brushLayer, _brushBaseGrh, _brushSettings)
+            End If
         End Sub
 
         Private Sub UpdateSurfaceSize()

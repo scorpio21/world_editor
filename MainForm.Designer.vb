@@ -31,6 +31,7 @@ Namespace WorldEditorNet
         Friend WithEvents fillLayer3MenuItem As ToolStripMenuItem
         Friend WithEvents fillLayer4MenuItem As ToolStripMenuItem
         Friend WithEvents paintSelectedMenuItem As ToolStripMenuItem
+        Friend WithEvents brushMenuItem As ToolStripMenuItem
         Friend WithEvents viewMenuItem As ToolStripMenuItem
         Friend WithEvents optionsMenuItem As ToolStripMenuItem
         Friend WithEvents saveConfigMenuItem As ToolStripMenuItem
@@ -88,6 +89,7 @@ Namespace WorldEditorNet
             Me.fillLayer3MenuItem = New ToolStripMenuItem()
             Me.fillLayer4MenuItem = New ToolStripMenuItem()
             Me.paintSelectedMenuItem = New ToolStripMenuItem()
+            Me.brushMenuItem = New ToolStripMenuItem()
             Me.viewMenuItem = New ToolStripMenuItem()
             Me.optionsMenuItem = New ToolStripMenuItem()
             Me.saveConfigMenuItem = New ToolStripMenuItem()
@@ -136,7 +138,7 @@ Namespace WorldEditorNet
                 Me.clearLayer4MenuItem, New ToolStripSeparator(), Me.blockAllMenuItem,
                 Me.unblockAllMenuItem, New ToolStripSeparator(), Me.fillLayer1MenuItem,
                 Me.fillLayer2MenuItem, Me.fillLayer3MenuItem, Me.fillLayer4MenuItem,
-                New ToolStripSeparator(), Me.paintSelectedMenuItem})
+                New ToolStripSeparator(), Me.paintSelectedMenuItem, Me.brushMenuItem})
             Me.editMenuItem.Text = "Edición"
             Me.undoMenuItem.Text = "Deshacer"
             Me.undoMenuItem.Enabled = False
@@ -156,6 +158,7 @@ Namespace WorldEditorNet
             Me.fillLayer3MenuItem.Text = "Rellenar capa 3 con GRH..."
             Me.fillLayer4MenuItem.Text = "Rellenar capa 4 con GRH..."
             Me.paintSelectedMenuItem.Text = "Pintar celda seleccionada..."
+            Me.brushMenuItem.Text = "Activar pincel..."
 
             Me.viewMenuItem.DropDownItems.AddRange(New ToolStripItem() {
                 Me.layer1MenuItem, Me.layer2MenuItem, Me.layer3MenuItem,

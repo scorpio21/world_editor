@@ -67,6 +67,9 @@ paridad visual con DirectDraw.
 - Añadido `Edición > Pintar celda seleccionada...`: solicita capa y GRH base,
   aplica el patrón de mosaico usando las coordenadas reales de la celda y
   actualiza `Changed`/deshacer.
+- Añadido `Edición > Activar pincel...`: configura capa y GRH base y permite
+  pintar arrastrando el botón izquierdo sobre la superficie. El pincel se
+  desactiva al abrir o crear otro mapa.
 - `clsIniReader` registra las páginas de códigos de .NET 8 para conservar la
   lectura ANSI/CP1252 de los INI históricos.
 
@@ -90,8 +93,8 @@ paridad visual con DirectDraw.
 - No existe todavía renderer DirectDraw/GDI+ equivalente.
 - V2 y V3 siguen sin implementarse.
 - La vista previa avanzada y las operaciones de autocompletado por selección
-  todavía no están migradas; el modo mosaico se aplica al rellenado global y a
-  la pintura explícita de la celda seleccionada.
+  todavía no están migradas; el modo mosaico se aplica al rellenado global,
+  a la pintura explícita y al pincel continuo.
 
 ## Verificación
 

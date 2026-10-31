@@ -92,6 +92,7 @@ Namespace WorldEditorNet
                 _document = codec.Load(openMapDialog.FileName)
                 _mapPath = openMapDialog.FileName
                 mapSurface.Document = _document
+                DisableBrush()
                 undoMenuItem.Enabled = False
                 UpdateMapStatus()
             Catch ex As Exception
@@ -255,6 +256,49 @@ Namespace WorldEditorNet
             Catch ex As Exception
                 statusLabel.Text = ex.Message
             End Try
+        End Sub
+
+        Private Sub BrushMenuItem_Click(sender As Object, e As EventArgs) Handles brushMenuItem.Click
+            If mapSurface.BrushEnabled Then
+                DisableBrush()
+                statusLabel.Text = "Pincel desactivado"
+                Return
+            End If
+
+            Dim layerText As String = Microsoft.VisualBasic.Interaction.InputBox(
+                "Capa del pincel (1 a 4):", "Activar pincel", "1")
+            If String.IsNullOrWhiteSpace(layerText) Then Return
+
+            Dim layer As Integer
+            If Not Integer.TryParse(layerText, layer) OrElse layer < 1 OrElse layer > 4 Then
+                statusLabel.Text = "La capa del pincel debe estar entre 1 y 4"
+                Return
+            End If
+
+            Dim grhText As String = Microsoft.VisualBasic.Interaction.InputBox(
+                "GRH base del pincel:", "Activar pincel", "1")
+            If String.IsNullOrWhiteSpace(grhText) Then Return
+
+            Dim baseGrh As Integer
+            If Not Integer.TryParse(grhText, baseGrh) OrElse baseGrh < 0 OrElse baseGrh > Short.MaxValue Then
+                statusLabel.Text = "El GRH del pincel debe estar entre 0 y 32767"
+                Return
+            End If
+
+            Try
+                mapSurface.ConfigureBrush(layer, baseGrh, _surfaceSettings)
+                brushMenuItem.Checked = True
+                brushMenuItem.Text = "Desactivar pincel"
+                statusLabel.Text = $"Pincel activo: capa {layer}, GRH {baseGrh}"
+            Catch ex As Exception
+                statusLabel.Text = ex.Message
+            End Try
+        End Sub
+
+        Private Sub DisableBrush()
+            mapSurface.BrushEnabled = False
+            brushMenuItem.Checked = False
+            brushMenuItem.Text = "Activar pincel..."
         End Sub
 
         Private Sub FillCompleteLayer(ByVal layer As Integer)
@@ -452,6 +496,7 @@ Namespace WorldEditorNet
 
             _mapPath = String.Empty
             mapSurface.Document = _document
+            DisableBrush()
             undoMenuItem.Enabled = False
             mapSurface.GraphicsIndex = _graphicsIndex
             If _settings IsNot Nothing Then mapSurface.GraphicsDirectory = _settings.DirGraficos
