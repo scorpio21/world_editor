@@ -33,6 +33,7 @@ Namespace WorldEditorNet
         Friend WithEvents viewMenuItem As ToolStripMenuItem
         Friend WithEvents optionsMenuItem As ToolStripMenuItem
         Friend WithEvents saveConfigMenuItem As ToolStripMenuItem
+        Friend WithEvents surfaceConfigMenuItem As ToolStripMenuItem
         Friend WithEvents layer1MenuItem As ToolStripMenuItem
         Friend WithEvents layer2MenuItem As ToolStripMenuItem
         Friend WithEvents layer3MenuItem As ToolStripMenuItem
@@ -88,6 +89,7 @@ Namespace WorldEditorNet
             Me.viewMenuItem = New ToolStripMenuItem()
             Me.optionsMenuItem = New ToolStripMenuItem()
             Me.saveConfigMenuItem = New ToolStripMenuItem()
+            Me.surfaceConfigMenuItem = New ToolStripMenuItem()
             Me.layer1MenuItem = New ToolStripMenuItem()
             Me.layer2MenuItem = New ToolStripMenuItem()
             Me.layer3MenuItem = New ToolStripMenuItem()
@@ -168,8 +170,10 @@ Namespace WorldEditorNet
             Me.triggersMenuItem.Text = "Triggers"
             Me.gridMenuItem.Text = "Cuadrícula"
 
-            Me.optionsMenuItem.DropDownItems.Add(Me.saveConfigMenuItem)
+            Me.optionsMenuItem.DropDownItems.AddRange(New ToolStripItem() {
+                Me.surfaceConfigMenuItem, New ToolStripSeparator(), Me.saveConfigMenuItem})
             Me.optionsMenuItem.Text = "Opciones"
+            Me.surfaceConfigMenuItem.Text = "Configuración avanzada de superficie..."
             Me.saveConfigMenuItem.Text = "Guardar última configuración"
             Me.saveConfigMenuItem.Checked = True
 

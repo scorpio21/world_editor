@@ -181,6 +181,37 @@ Namespace WorldEditorNet
             Return changed
         End Function
 
+        Public Function FillLayerWithPattern(ByVal layer As Integer,
+                                             ByVal baseGrh As Integer,
+                                             ByVal settings As SurfacePatternSettings) As Boolean
+            If _document Is Nothing OrElse layer < 1 OrElse layer > 4 OrElse settings Is Nothing Then Return False
+
+            Dim changed As Boolean = False
+            For y As Integer = 1 To 100
+                For x As Integer = 1 To 100
+                    Dim grhIndex As Integer = settings.GetGraphicIndex(baseGrh, x, y)
+                    If grhIndex < 0 OrElse grhIndex > Short.MaxValue Then
+                        Throw New InvalidOperationException("El mosaico genera un GRH fuera del rango V1.")
+                    End If
+
+                    Dim cell As MapV1Cell = _document.Cells(x, y)
+                    If GetGraphic(cell, layer) <> grhIndex Then
+                        SetGraphic(cell, layer, CShort(grhIndex))
+                        _document.Cells(x, y) = cell
+                        changed = True
+                    End If
+                Next
+            Next
+
+            If changed Then
+                _document.Changed = True
+                _hasUndo = False
+                Invalidate()
+                RaiseEvent CellEdited(Me, EventArgs.Empty)
+            End If
+            Return changed
+        End Function
+
         Public Function UndoLastEdit() As Boolean
             If _document Is Nothing OrElse Not _hasUndo Then Return False
 

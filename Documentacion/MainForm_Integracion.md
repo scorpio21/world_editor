@@ -60,6 +60,10 @@ paridad visual con DirectDraw.
   mosaico de `Superficie_Todo`: aplican un GRH a las 10.000 celdas después de
   validar y confirmar. El modo mosaico/autocompletado sigue pendiente de
   portar `frmConfigSup`.
+- Añadido `SurfaceConfigForm`, equivalente a `frmConfigSup`, con controles de
+  diseñador para activar mosaico, configurar ancho/largo y aplicar
+  desplazamientos X/Y. `Opciones > Configuración avanzada de superficie...`
+  abre la ventana y `Superficie_Todo` usa sus valores.
 - `clsIniReader` registra las páginas de códigos de .NET 8 para conservar la
   lectura ANSI/CP1252 de los INI históricos.
 
@@ -82,6 +86,8 @@ paridad visual con DirectDraw.
   de esta superficie inicial; todavía no controlan un renderer de sprites.
 - No existe todavía renderer DirectDraw/GDI+ equivalente.
 - V2 y V3 siguen sin implementarse.
+- La vista previa avanzada y las operaciones de autocompletado por selección
+  todavía no están migradas; el modo mosaico ya se aplica al rellenado global.
 
 ## Verificación
 

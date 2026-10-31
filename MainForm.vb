@@ -8,6 +8,7 @@ Namespace WorldEditorNet
         Private _mapPath As String = String.Empty
         Private _settings As WorldEditorSettings
         Private _graphicsIndex As GraficosIndReader
+        Private _surfaceSettings As New SurfacePatternSettings()
         Private _startupMessage As String = String.Empty
 
         Public Sub New()
@@ -235,18 +236,22 @@ Namespace WorldEditorNet
 
             Dim answer As DialogResult = MessageBox.Show(
                 Me,
-                $"¿Aplicar GRH {grhIndex} a toda la capa {layer}?",
+                $"¿Aplicar la configuración de superficie a toda la capa {layer}?",
                 "Rellenar capa completa",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning)
             If answer <> DialogResult.Yes Then Return
 
-            If mapSurface.FillLayer(layer, grhIndex) Then
-                undoMenuItem.Enabled = False
-                UpdateMapStatus($"Capa {layer} rellenada con GRH {grhIndex}")
-            Else
-                statusLabel.Text = $"La capa {layer} ya tenía el GRH {grhIndex}"
-            End If
+            Try
+                If mapSurface.FillLayerWithPattern(layer, grhIndex, _surfaceSettings) Then
+                    undoMenuItem.Enabled = False
+                    UpdateMapStatus($"Capa {layer} rellenada con la configuración de superficie")
+                Else
+                    statusLabel.Text = $"La capa {layer} ya tenía la configuración indicada"
+                End If
+            Catch ex As Exception
+                statusLabel.Text = ex.Message
+            End Try
         End Sub
 
         Private Sub SetAllBlocked(ByVal blocked As Boolean)
@@ -363,6 +368,16 @@ Namespace WorldEditorNet
 
         Private Sub SaveConfigMenuItem_Click(sender As Object, e As EventArgs) Handles saveConfigMenuItem.Click
             saveConfigMenuItem.Checked = Not saveConfigMenuItem.Checked
+        End Sub
+
+        Private Sub SurfaceConfigMenuItem_Click(sender As Object, e As EventArgs) Handles surfaceConfigMenuItem.Click
+            Using dialog As New SurfaceConfigForm()
+                dialog.Settings = _surfaceSettings
+                If dialog.ShowDialog(Me) = DialogResult.OK Then
+                    _surfaceSettings = dialog.Settings
+                    statusLabel.Text = "Configuración avanzada de superficie actualizada"
+                End If
+            End Using
         End Sub
 
         Private Shared Sub ToggleViewItem(item As ToolStripMenuItem, apply As Action(Of Boolean))

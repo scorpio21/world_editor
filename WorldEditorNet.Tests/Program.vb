@@ -88,6 +88,17 @@ Module Program
             AssertEqual(True, loadedSettings.VerGrilla, "Grilla")
             AssertEqual(CShort(45), loadedSettings.UserPos.X, "posición X")
             AssertEqual(CShort(66), loadedSettings.UserPos.Y, "posición Y")
+
+            Dim pattern As New SurfacePatternSettings With {
+                .Mosaic = True,
+                .Width = 2,
+                .Height = 2,
+                .OffsetEnabled = True,
+                .OffsetX = -1,
+                .OffsetY = -1}
+            AssertEqual(100, pattern.GetGraphicIndex(100, 1, 1), "GRH con desplazamiento")
+            pattern.Mosaic = False
+            AssertEqual(100, pattern.GetGraphicIndex(100, 17, 23), "GRH sin mosaico")
             Console.WriteLine("MapV1Codec smoke test: OK")
         Finally
             If Directory.Exists(root) Then Directory.Delete(root, recursive:=True)
