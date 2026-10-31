@@ -64,6 +64,9 @@ paridad visual con DirectDraw.
   diseñador para activar mosaico, configurar ancho/largo y aplicar
   desplazamientos X/Y. `Opciones > Configuración avanzada de superficie...`
   abre la ventana y `Superficie_Todo` usa sus valores.
+- Añadido `Edición > Pintar celda seleccionada...`: solicita capa y GRH base,
+  aplica el patrón de mosaico usando las coordenadas reales de la celda y
+  actualiza `Changed`/deshacer.
 - `clsIniReader` registra las páginas de códigos de .NET 8 para conservar la
   lectura ANSI/CP1252 de los INI históricos.
 
@@ -87,7 +90,8 @@ paridad visual con DirectDraw.
 - No existe todavía renderer DirectDraw/GDI+ equivalente.
 - V2 y V3 siguen sin implementarse.
 - La vista previa avanzada y las operaciones de autocompletado por selección
-  todavía no están migradas; el modo mosaico ya se aplica al rellenado global.
+  todavía no están migradas; el modo mosaico se aplica al rellenado global y a
+  la pintura explícita de la celda seleccionada.
 
 ## Verificación
 

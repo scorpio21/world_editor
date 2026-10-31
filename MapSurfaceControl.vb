@@ -105,6 +105,14 @@ Namespace WorldEditorNet
             Return True
         End Function
 
+        Public Function SetSelectedGraphicWithPattern(ByVal layer As Integer,
+                                                       ByVal baseGrh As Integer,
+                                                       ByVal settings As SurfacePatternSettings) As Boolean
+            If _document Is Nothing OrElse _selectedX < 1 OrElse _selectedY < 1 OrElse settings Is Nothing Then Return False
+            Dim grhIndex As Integer = settings.GetGraphicIndex(baseGrh, _selectedX, _selectedY)
+            Return SetSelectedGraphic(layer, grhIndex)
+        End Function
+
         Public Function ClearLayer(ByVal layer As Integer) As Boolean
             If _document Is Nothing OrElse layer < 1 OrElse layer > 4 Then Return False
 

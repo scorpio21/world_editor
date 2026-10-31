@@ -219,6 +219,44 @@ Namespace WorldEditorNet
             FillCompleteLayer(4)
         End Sub
 
+        Private Sub PaintSelectedMenuItem_Click(sender As Object, e As EventArgs) Handles paintSelectedMenuItem.Click
+            If _document Is Nothing OrElse mapSurface.SelectedX < 1 Then
+                statusLabel.Text = "Selecciona una celda antes de pintarla"
+                Return
+            End If
+
+            Dim layerText As String = Microsoft.VisualBasic.Interaction.InputBox(
+                "Capa (1 a 4):", "Pintar celda seleccionada", "1")
+            If String.IsNullOrWhiteSpace(layerText) Then Return
+
+            Dim layer As Integer
+            If Not Integer.TryParse(layerText, layer) OrElse layer < 1 OrElse layer > 4 Then
+                statusLabel.Text = "La capa debe estar entre 1 y 4"
+                Return
+            End If
+
+            Dim grhText As String = Microsoft.VisualBasic.Interaction.InputBox(
+                "GRH base:", "Pintar celda seleccionada", "1")
+            If String.IsNullOrWhiteSpace(grhText) Then Return
+
+            Dim baseGrh As Integer
+            If Not Integer.TryParse(grhText, baseGrh) OrElse baseGrh < 0 OrElse baseGrh > Short.MaxValue Then
+                statusLabel.Text = "El GRH debe ser un número entre 0 y 32767"
+                Return
+            End If
+
+            Try
+                If mapSurface.SetSelectedGraphicWithPattern(layer, baseGrh, _surfaceSettings) Then
+                    undoMenuItem.Enabled = True
+                    UpdateMapStatus($"Celda pintada en capa {layer}")
+                Else
+                    statusLabel.Text = "El GRH de la celda no ha cambiado"
+                End If
+            Catch ex As Exception
+                statusLabel.Text = ex.Message
+            End Try
+        End Sub
+
         Private Sub FillCompleteLayer(ByVal layer As Integer)
             If _document Is Nothing Then Return
 

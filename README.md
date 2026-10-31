@@ -52,6 +52,8 @@ WinForms sobre .NET 8.
 - Permite rellenar una capa completa con un GRH o con un patrón de mosaico. La configuración avanzada
   ya está disponible desde `Opciones > Configuración avanzada de superficie...`
   y permite mosaico, ancho/largo y desplazamiento X/Y.
+- `Edición > Pintar celda seleccionada...` aplica un GRH base y el patrón
+  configurado a una celda concreta.
 - Estructuras, constantes y estado de datos documentados.
 - DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
   implementados.
