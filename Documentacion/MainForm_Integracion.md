@@ -105,6 +105,10 @@ paridad visual con DirectDraw.
   VB6, varias acciones de `Paneles`, `Opciones`, exportación y funciones
   avanzadas siguen pendientes de implementación; por eso su compatibilidad
   funcional no debe considerarse 100 %.
+- El análisis de `modPaneles.bas` está documentado en
+  `Documentacion/modPaneles_Comparacion.md`. Los paneles F5–F12 siguen
+  pendientes porque el formulario WinForms todavía no tiene sus controles
+  equivalentes; mantenerlos deshabilitados evita acciones vacías.
 
 ## Verificación
 
