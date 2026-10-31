@@ -202,6 +202,53 @@ Namespace WorldEditorNet
             SetAllBlocked(False)
         End Sub
 
+        Private Sub FillLayer1MenuItem_Click(sender As Object, e As EventArgs) Handles fillLayer1MenuItem.Click
+            FillCompleteLayer(1)
+        End Sub
+
+        Private Sub FillLayer2MenuItem_Click(sender As Object, e As EventArgs) Handles fillLayer2MenuItem.Click
+            FillCompleteLayer(2)
+        End Sub
+
+        Private Sub FillLayer3MenuItem_Click(sender As Object, e As EventArgs) Handles fillLayer3MenuItem.Click
+            FillCompleteLayer(3)
+        End Sub
+
+        Private Sub FillLayer4MenuItem_Click(sender As Object, e As EventArgs) Handles fillLayer4MenuItem.Click
+            FillCompleteLayer(4)
+        End Sub
+
+        Private Sub FillCompleteLayer(ByVal layer As Integer)
+            If _document Is Nothing Then Return
+
+            Dim value As String = Microsoft.VisualBasic.Interaction.InputBox(
+                $"GRH que se aplicará a las 10.000 celdas de la capa {layer}:",
+                "Rellenar capa completa",
+                "1")
+            If String.IsNullOrWhiteSpace(value) Then Return
+
+            Dim grhIndex As Integer
+            If Not Integer.TryParse(value, grhIndex) OrElse grhIndex < 0 OrElse grhIndex > Short.MaxValue Then
+                statusLabel.Text = "El GRH debe ser un número entre 0 y 32767"
+                Return
+            End If
+
+            Dim answer As DialogResult = MessageBox.Show(
+                Me,
+                $"¿Aplicar GRH {grhIndex} a toda la capa {layer}?",
+                "Rellenar capa completa",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning)
+            If answer <> DialogResult.Yes Then Return
+
+            If mapSurface.FillLayer(layer, grhIndex) Then
+                undoMenuItem.Enabled = False
+                UpdateMapStatus($"Capa {layer} rellenada con GRH {grhIndex}")
+            Else
+                statusLabel.Text = $"La capa {layer} ya tenía el GRH {grhIndex}"
+            End If
+        End Sub
+
         Private Sub SetAllBlocked(ByVal blocked As Boolean)
             Dim action As String = If(blocked, "bloquear", "quitar todos los bloqueos de")
             Dim answer As DialogResult = MessageBox.Show(

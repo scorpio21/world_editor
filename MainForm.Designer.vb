@@ -26,6 +26,10 @@ Namespace WorldEditorNet
         Friend WithEvents clearLayer4MenuItem As ToolStripMenuItem
         Friend WithEvents blockAllMenuItem As ToolStripMenuItem
         Friend WithEvents unblockAllMenuItem As ToolStripMenuItem
+        Friend WithEvents fillLayer1MenuItem As ToolStripMenuItem
+        Friend WithEvents fillLayer2MenuItem As ToolStripMenuItem
+        Friend WithEvents fillLayer3MenuItem As ToolStripMenuItem
+        Friend WithEvents fillLayer4MenuItem As ToolStripMenuItem
         Friend WithEvents viewMenuItem As ToolStripMenuItem
         Friend WithEvents optionsMenuItem As ToolStripMenuItem
         Friend WithEvents saveConfigMenuItem As ToolStripMenuItem
@@ -77,6 +81,10 @@ Namespace WorldEditorNet
             Me.clearLayer4MenuItem = New ToolStripMenuItem()
             Me.blockAllMenuItem = New ToolStripMenuItem()
             Me.unblockAllMenuItem = New ToolStripMenuItem()
+            Me.fillLayer1MenuItem = New ToolStripMenuItem()
+            Me.fillLayer2MenuItem = New ToolStripMenuItem()
+            Me.fillLayer3MenuItem = New ToolStripMenuItem()
+            Me.fillLayer4MenuItem = New ToolStripMenuItem()
             Me.viewMenuItem = New ToolStripMenuItem()
             Me.optionsMenuItem = New ToolStripMenuItem()
             Me.saveConfigMenuItem = New ToolStripMenuItem()
@@ -122,7 +130,8 @@ Namespace WorldEditorNet
                 Me.setLayer3MenuItem, Me.setLayer4MenuItem, New ToolStripSeparator(),
                 Me.clearLayer1MenuItem, Me.clearLayer2MenuItem, Me.clearLayer3MenuItem,
                 Me.clearLayer4MenuItem, New ToolStripSeparator(), Me.blockAllMenuItem,
-                Me.unblockAllMenuItem})
+                Me.unblockAllMenuItem, New ToolStripSeparator(), Me.fillLayer1MenuItem,
+                Me.fillLayer2MenuItem, Me.fillLayer3MenuItem, Me.fillLayer4MenuItem})
             Me.editMenuItem.Text = "Edición"
             Me.undoMenuItem.Text = "Deshacer"
             Me.undoMenuItem.Enabled = False
@@ -137,6 +146,10 @@ Namespace WorldEditorNet
             Me.clearLayer4MenuItem.Text = "Borrar capa 4 completa"
             Me.blockAllMenuItem.Text = "Bloquear todo el mapa"
             Me.unblockAllMenuItem.Text = "Quitar todos los bloqueos"
+            Me.fillLayer1MenuItem.Text = "Rellenar capa 1 con GRH..."
+            Me.fillLayer2MenuItem.Text = "Rellenar capa 2 con GRH..."
+            Me.fillLayer3MenuItem.Text = "Rellenar capa 3 con GRH..."
+            Me.fillLayer4MenuItem.Text = "Rellenar capa 4 con GRH..."
 
             Me.viewMenuItem.DropDownItems.AddRange(New ToolStripItem() {
                 Me.layer1MenuItem, Me.layer2MenuItem, Me.layer3MenuItem,

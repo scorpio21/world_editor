@@ -56,6 +56,10 @@ paridad visual con DirectDraw.
 - Añadidos `Bloquear todo el mapa` y `Quitar todos los bloqueos`, equivalentes
   a `Bloqueo_Todo(1)` y `Bloqueo_Todo(0)`, con confirmación y actualización de
   `Changed` sobre las 10.000 celdas.
+- Añadidos `Rellenar capa 1...` hasta `capa 4...`, equivalentes a la rama no
+  mosaico de `Superficie_Todo`: aplican un GRH a las 10.000 celdas después de
+  validar y confirmar. El modo mosaico/autocompletado sigue pendiente de
+  portar `frmConfigSup`.
 - `clsIniReader` registra las páginas de códigos de .NET 8 para conservar la
   lectura ANSI/CP1252 de los INI históricos.
 
