@@ -33,7 +33,10 @@ Namespace WorldEditorNet
         Friend WithEvents paintSelectedMenuItem As ToolStripMenuItem
         Friend WithEvents brushMenuItem As ToolStripMenuItem
         Friend WithEvents viewMenuItem As ToolStripMenuItem
+        Friend WithEvents panelsMenuItem As ToolStripMenuItem
         Friend WithEvents optionsMenuItem As ToolStripMenuItem
+        Friend WithEvents helpMenuItem As ToolStripMenuItem
+        Friend WithEvents screenMenuItem As ToolStripMenuItem
         Friend WithEvents saveConfigMenuItem As ToolStripMenuItem
         Friend WithEvents surfaceConfigMenuItem As ToolStripMenuItem
         Friend WithEvents layer1MenuItem As ToolStripMenuItem
@@ -91,7 +94,10 @@ Namespace WorldEditorNet
             Me.paintSelectedMenuItem = New ToolStripMenuItem()
             Me.brushMenuItem = New ToolStripMenuItem()
             Me.viewMenuItem = New ToolStripMenuItem()
+            Me.panelsMenuItem = New ToolStripMenuItem()
             Me.optionsMenuItem = New ToolStripMenuItem()
+            Me.helpMenuItem = New ToolStripMenuItem()
+            Me.screenMenuItem = New ToolStripMenuItem()
             Me.saveConfigMenuItem = New ToolStripMenuItem()
             Me.surfaceConfigMenuItem = New ToolStripMenuItem()
             Me.layer1MenuItem = New ToolStripMenuItem()
@@ -115,74 +121,130 @@ Namespace WorldEditorNet
             Me.statusStrip1.SuspendLayout()
             Me.SuspendLayout()
 
-            Me.menuStrip1.Items.AddRange(New ToolStripItem() {Me.fileMenuItem, Me.editMenuItem, Me.viewMenuItem, Me.optionsMenuItem})
+            Dim reopenMapMenuItem As New ToolStripMenuItem("&Re-Abrir Mapa") With {.Enabled = False}
+            Dim newFormatMenuItem As New ToolStripMenuItem("Utilizar &Nuevo Formato al Guardar") With {.Enabled = False}
+            Dim saveMapAsMenuItem As New ToolStripMenuItem("Guardar Mapa &como...") With {.Enabled = False}
+            Dim saveBmpMenuItem As New ToolStripMenuItem("Guardar como &BMP") With {.Enabled = False}
+            Dim saveJpgMenuItem As New ToolStripMenuItem("Guardar como &JPG") With {.Enabled = False}
+            Dim useUndoMenuItem As New ToolStripMenuItem("&Utilizar Deshacer") With {.Checked = True, .Enabled = False}
+            Dim mapInfoMenuItem As New ToolStripMenuItem("&Información del Mapa") With {.Enabled = False}
+            Dim insertMenuItem As New ToolStripMenuItem("&Insertar")
+            Dim removeMenuItem As New ToolStripMenuItem("&Quitar")
+            Dim functionsMenuItem As New ToolStripMenuItem("&Funciones")
+            Dim autoCompleteMenuItem As New ToolStripMenuItem("Auto-Completar &Superficies") With {.Enabled = False}
+            Dim autoCaptureSurfaceMenuItem As New ToolStripMenuItem("Auto-C&apturar información de la Superficie") With {.Enabled = False}
+            Dim autoCaptureTransfersMenuItem As New ToolStripMenuItem("Auto-&Capturar información de los Translados") With {.Checked = True, .Enabled = False}
+            Dim autoSaveMapsMenuItem As New ToolStripMenuItem("Configuración de Auto-&Guardar Mapas") With {.Enabled = False}
+
+            Me.menuStrip1.Items.AddRange(New ToolStripItem() {Me.fileMenuItem, Me.editMenuItem,
+                Me.viewMenuItem, Me.panelsMenuItem, Me.optionsMenuItem, Me.helpMenuItem, Me.screenMenuItem})
             Me.menuStrip1.Location = New Point(0, 0)
             Me.menuStrip1.Name = "menuStrip1"
             Me.menuStrip1.Size = New Size(1100, 24)
             Me.menuStrip1.TabIndex = 0
 
+            Me.fileMenuItem.Text = "&Archivo"
+            Me.newMapMenuItem.Text = "&Nuevo Mapa"
+            Me.newMapMenuItem.ShortcutKeys = Keys.Control Or Keys.N
+            Me.openMapMenuItem.Text = "&Abrir Mapa"
+            Me.openMapMenuItem.ShortcutKeys = Keys.Control Or Keys.A
+            Me.saveMapMenuItem.Text = "&Guardar Mapa"
+            Me.saveMapMenuItem.ShortcutKeys = Keys.Control Or Keys.G
+            Me.exitMenuItem.Text = "&Salir"
             Me.fileMenuItem.DropDownItems.AddRange(New ToolStripItem() {
-                Me.newMapMenuItem, Me.openMapMenuItem, Me.saveMapMenuItem,
-                New ToolStripSeparator(), Me.exitMenuItem})
-            Me.fileMenuItem.Text = "Archivo"
-            Me.newMapMenuItem.Text = "Nuevo mapa"
-            Me.openMapMenuItem.Text = "Abrir mapa..."
-            Me.saveMapMenuItem.Text = "Guardar mapa"
-            Me.exitMenuItem.Text = "Salir"
+                New ToolStripSeparator(), Me.newMapMenuItem, Me.openMapMenuItem, New ToolStripSeparator(), reopenMapMenuItem,
+                New ToolStripSeparator(), newFormatMenuItem, New ToolStripSeparator(), Me.saveMapMenuItem,
+                saveMapAsMenuItem, New ToolStripSeparator(), saveBmpMenuItem, saveJpgMenuItem,
+                New ToolStripSeparator(), Me.exitMenuItem, New ToolStripSeparator()})
 
-            Me.editMenuItem.DropDownItems.AddRange(New ToolStripItem() {
-                Me.undoMenuItem, New ToolStripSeparator(), Me.toggleBlockedMenuItem,
-                New ToolStripSeparator(), Me.setLayer1MenuItem, Me.setLayer2MenuItem,
-                Me.setLayer3MenuItem, Me.setLayer4MenuItem, New ToolStripSeparator(),
-                Me.clearLayer1MenuItem, Me.clearLayer2MenuItem, Me.clearLayer3MenuItem,
-                Me.clearLayer4MenuItem, New ToolStripSeparator(), Me.blockAllMenuItem,
-                Me.unblockAllMenuItem, New ToolStripSeparator(), Me.fillLayer1MenuItem,
-                Me.fillLayer2MenuItem, Me.fillLayer3MenuItem, Me.fillLayer4MenuItem,
-                New ToolStripSeparator(), Me.paintSelectedMenuItem, Me.brushMenuItem})
-            Me.editMenuItem.Text = "Edición"
-            Me.undoMenuItem.Text = "Deshacer"
+            Me.editMenuItem.Text = "&Edición"
+            Me.undoMenuItem.Text = "&Deshacer"
+            Me.undoMenuItem.ShortcutKeys = Keys.Control Or Keys.Z
             Me.undoMenuItem.Enabled = False
-            Me.toggleBlockedMenuItem.Text = "Alternar bloqueo de la celda"
-            Me.setLayer1MenuItem.Text = "Establecer GRH en capa 1..."
-            Me.setLayer2MenuItem.Text = "Establecer GRH en capa 2..."
-            Me.setLayer3MenuItem.Text = "Establecer GRH en capa 3..."
-            Me.setLayer4MenuItem.Text = "Establecer GRH en capa 4..."
-            Me.clearLayer1MenuItem.Text = "Borrar capa 1 completa"
-            Me.clearLayer2MenuItem.Text = "Borrar capa 2 completa"
-            Me.clearLayer3MenuItem.Text = "Borrar capa 3 completa"
-            Me.clearLayer4MenuItem.Text = "Borrar capa 4 completa"
-            Me.blockAllMenuItem.Text = "Bloquear todo el mapa"
-            Me.unblockAllMenuItem.Text = "Quitar todos los bloqueos"
-            Me.fillLayer1MenuItem.Text = "Rellenar capa 1 con GRH..."
-            Me.fillLayer2MenuItem.Text = "Rellenar capa 2 con GRH..."
-            Me.fillLayer3MenuItem.Text = "Rellenar capa 3 con GRH..."
-            Me.fillLayer4MenuItem.Text = "Rellenar capa 4 con GRH..."
-            Me.paintSelectedMenuItem.Text = "Pintar celda seleccionada..."
-            Me.brushMenuItem.Text = "Activar pincel..."
+            Me.surfaceConfigMenuItem.Text = "Configuración A&vanzada de Superficie"
+            Dim insertAdjacentMenuItem As New ToolStripMenuItem("&Translados a Mapas Adyasentes") With {.Enabled = False}
+            Dim insertRandomMenuItem As New ToolStripMenuItem("Superficie al &Azar") With {.Enabled = False}
+            Dim insertBordersMenuItem As New ToolStripMenuItem("Superficie en los &Bordes del Mapa") With {.Enabled = False}
+            Dim insertAllMenuItem As New ToolStripMenuItem("Superficie en Todo el Mapa") With {.Enabled = False}
+            Dim insertBlockBordersMenuItem As New ToolStripMenuItem("Bloqueo en &Bordes del Mapa") With {.Enabled = False}
+            Dim insertBlockMapMenuItem As New ToolStripMenuItem("Bloqueo en &Todo el Mapa") With {.Enabled = False}
+            insertMenuItem.DropDownItems.AddRange(New ToolStripItem() {insertAdjacentMenuItem, insertRandomMenuItem,
+                insertBordersMenuItem, insertAllMenuItem, insertBlockBordersMenuItem, insertBlockMapMenuItem})
+            Dim removeTransfersMenuItem As New ToolStripMenuItem("Todos los &Translados") With {.Enabled = False}
+            Dim removeBlocksMenuItem As ToolStripMenuItem = Me.unblockAllMenuItem
+            removeBlocksMenuItem.Text = "Todos los &Bloqueos"
+            Dim removeNpcsMenuItem As New ToolStripMenuItem("Todos los &NPC's") With {.Enabled = False}
+            Dim removeHostileMenuItem As New ToolStripMenuItem("Todos los NPC's &Hostiles") With {.Enabled = False}
+            Dim removeObjectsMenuItem As New ToolStripMenuItem("Todos los &Objetos") With {.Enabled = False}
+            Dim removeTriggersMenuItem As New ToolStripMenuItem("Todos los Tri&gger's") With {.Enabled = False}
+            Dim removeSurfaceBordersMenuItem As New ToolStripMenuItem("Superficie de los B&ordes") With {.Enabled = False}
+            Dim removeSelectedLayerMenuItem As New ToolStripMenuItem("Superficie de la &Capa Seleccionada") With {.Enabled = False}
+            Dim removeAllMenuItem As New ToolStripMenuItem("TODO") With {.Enabled = False}
+            removeMenuItem.DropDownItems.AddRange(New ToolStripItem() {removeTransfersMenuItem, removeBlocksMenuItem,
+                removeNpcsMenuItem, removeHostileMenuItem, removeObjectsMenuItem, removeTriggersMenuItem,
+                removeSurfaceBordersMenuItem, removeSelectedLayerMenuItem, New ToolStripSeparator(), removeAllMenuItem})
+            Dim removeFunctionsMenuItem As New ToolStripMenuItem("&Quitar Funciones") With {.Enabled = False}
+            Dim autoRemoveFunctionsMenuItem As New ToolStripMenuItem("Auto-&Quitar Funciones") With {.Checked = True, .Enabled = False}
+            functionsMenuItem.DropDownItems.AddRange(New ToolStripItem() {removeFunctionsMenuItem, autoRemoveFunctionsMenuItem})
+            Me.editMenuItem.DropDownItems.AddRange(New ToolStripItem() {Me.undoMenuItem, useUndoMenuItem,
+                mapInfoMenuItem, New ToolStripSeparator(), insertMenuItem, removeMenuItem,
+                New ToolStripSeparator(), functionsMenuItem, Me.surfaceConfigMenuItem,
+                New ToolStripSeparator(), autoCompleteMenuItem, autoCaptureSurfaceMenuItem,
+                autoCaptureTransfersMenuItem, autoSaveMapsMenuItem})
 
-            Me.viewMenuItem.DropDownItems.AddRange(New ToolStripItem() {
-                Me.layer1MenuItem, Me.layer2MenuItem, Me.layer3MenuItem,
-                Me.layer4MenuItem, New ToolStripSeparator(),
-                Me.blockedMenuItem, Me.npcsMenuItem, Me.objectsMenuItem,
-                Me.transladosMenuItem, Me.triggersMenuItem, Me.gridMenuItem})
-            Me.viewMenuItem.Text = "Ver"
-            Me.layer1MenuItem.Text = "Capa 1 (piso)"
-            Me.layer2MenuItem.Text = "Capa 2"
-            Me.layer3MenuItem.Text = "Capa 3"
-            Me.layer4MenuItem.Text = "Capa 4"
-            Me.blockedMenuItem.Text = "Bloqueos"
-            Me.npcsMenuItem.Text = "NPCs"
-            Me.objectsMenuItem.Text = "Objetos"
-            Me.transladosMenuItem.Text = "Translados"
-            Me.triggersMenuItem.Text = "Triggers"
-            Me.gridMenuItem.Text = "Cuadrícula"
+            Me.viewMenuItem.Text = "&Ver"
+            Dim viewLayersMenuItem As New ToolStripMenuItem("...&Capas")
+            Me.layer1MenuItem.Text = "Capa &1 (Piso)"
+            Me.layer2MenuItem.Text = "Capa &2 (costas, etc)"
+            Me.layer3MenuItem.Text = "Capa &3 (arboles, etc)"
+            Me.layer4MenuItem.Text = "Capa &4 (techos, etc)"
+            viewLayersMenuItem.DropDownItems.AddRange(New ToolStripItem() {Me.layer1MenuItem, Me.layer2MenuItem, Me.layer3MenuItem, Me.layer4MenuItem})
+            Me.transladosMenuItem.Text = "...&Translados"
+            Me.blockedMenuItem.Text = "...&Bloqueos"
+            Me.npcsMenuItem.Text = "...&NPC's"
+            Me.objectsMenuItem.Text = "...&Objetos"
+            Me.triggersMenuItem.Text = "...Tri&gger's"
+            Me.gridMenuItem.Text = "...Gri&lla"
+            Dim automaticViewMenuItem As New ToolStripMenuItem("Control &Automaticamente") With {.Checked = True, .Enabled = False}
+            Me.viewMenuItem.DropDownItems.AddRange(New ToolStripItem() {viewLayersMenuItem, Me.transladosMenuItem,
+                Me.blockedMenuItem, Me.npcsMenuItem, Me.objectsMenuItem, Me.triggersMenuItem, Me.gridMenuItem,
+                New ToolStripSeparator(), automaticViewMenuItem})
 
-            Me.optionsMenuItem.DropDownItems.AddRange(New ToolStripItem() {
-                Me.surfaceConfigMenuItem, New ToolStripSeparator(), Me.saveConfigMenuItem})
-            Me.optionsMenuItem.Text = "Opciones"
-            Me.surfaceConfigMenuItem.Text = "Configuración avanzada de superficie..."
-            Me.saveConfigMenuItem.Text = "Guardar última configuración"
-            Me.saveConfigMenuItem.Checked = True
+            Me.panelsMenuItem.Text = "&Paneles"
+            Dim panelSurfaceMenuItem As New ToolStripMenuItem("&Superficie") With {.ShortcutKeys = Keys.F5, .Enabled = False}
+            Dim panelTransfersMenuItem As New ToolStripMenuItem("&Translados") With {.ShortcutKeys = Keys.F6, .Enabled = False}
+            Dim panelBlockMenuItem As New ToolStripMenuItem("&Bloquear") With {.ShortcutKeys = Keys.F7, .Enabled = False}
+            Dim panelNpcsMenuItem As New ToolStripMenuItem("&NPC's") With {.ShortcutKeys = Keys.F8, .Enabled = False}
+            Dim panelHostileMenuItem As New ToolStripMenuItem("NPC's &Hostiles") With {.ShortcutKeys = Keys.F9, .Enabled = False}
+            Dim panelObjectsMenuItem As New ToolStripMenuItem("&Objetos") With {.ShortcutKeys = Keys.F11, .Enabled = False}
+            Dim panelTriggersMenuItem As New ToolStripMenuItem("Tri&gger's") With {.ShortcutKeys = Keys.F12, .Enabled = False}
+            Me.panelsMenuItem.DropDownItems.AddRange(New ToolStripItem() {panelSurfaceMenuItem, panelTransfersMenuItem,
+                panelBlockMenuItem, panelNpcsMenuItem, panelHostileMenuItem, panelObjectsMenuItem, panelTriggersMenuItem,
+                New ToolStripSeparator(), New ToolStripMenuItem("Ocultar Superficie") With {.Enabled = False},
+                New ToolStripMenuItem("Ocultar Translados") With {.Enabled = False}, New ToolStripMenuItem("Ocultar Bloquear") With {.Enabled = False},
+                New ToolStripMenuItem("Ocultar NPC's") With {.Enabled = False}, New ToolStripMenuItem("Ocultar NPC's Hostiles") With {.Enabled = False},
+                New ToolStripMenuItem("Ocultar Objetos") With {.Enabled = False}, New ToolStripMenuItem("Ocultar Trigger's") With {.Enabled = False}})
+
+            Me.optionsMenuItem.Text = "&Opciones"
+            Dim reportsMenuItem As New ToolStripMenuItem("&Informes") With {.Enabled = False}
+            Dim updateIndicesMenuItem As New ToolStripMenuItem("&Actualizar Indices de...") With {.Enabled = False}
+            updateIndicesMenuItem.DropDownItems.AddRange(New ToolStripItem() {New ToolStripMenuItem("&Superficies"), New ToolStripMenuItem("&NPC's"), New ToolStripMenuItem("&Objetos"), New ToolStripMenuItem("&Trigger's"), New ToolStripMenuItem("C&abezas"), New ToolStripMenuItem("C&uerpos"), New ToolStripMenuItem("&Graficos")})
+            Dim walkModeMenuItem As New ToolStripMenuItem("Modalidad &Caminata") With {.Enabled = False}
+            Dim grhBmpMenuItem As New ToolStripMenuItem("&GRH => BMP") With {.Enabled = False}
+            Dim optimizeMenuItem As New ToolStripMenuItem("Optimi&zar Mapa") With {.ShortcutKeys = Keys.Control Or Keys.O, .Enabled = False}
+            Me.saveConfigMenuItem.Text = "&Guardar Ultima Configuración"
+            Me.optionsMenuItem.DropDownItems.AddRange(New ToolStripItem() {reportsMenuItem, updateIndicesMenuItem,
+                walkModeMenuItem, grhBmpMenuItem, New ToolStripSeparator(), optimizeMenuItem,
+                New ToolStripSeparator(), Me.saveConfigMenuItem})
+
+            Me.helpMenuItem.Text = "Ay&uda"
+            Me.helpMenuItem.DropDownItems.AddRange(New ToolStripItem() {New ToolStripMenuItem("&Manual") With {.ShortcutKeys = Keys.F1, .Enabled = False}, New ToolStripSeparator(), New ToolStripMenuItem("&Acerca de...") With {.Enabled = False}})
+            Me.screenMenuItem.Text = "&Pantalla"
+            Dim horizontalMenuItem As New ToolStripMenuItem("&Tamaño Horizontal")
+            horizontalMenuItem.DropDownItems.AddRange(New ToolStripItem() {New ToolStripMenuItem("&Chico") With {.Checked = True, .Enabled = False}, New ToolStripMenuItem("&Mediano") With {.Enabled = False}, New ToolStripMenuItem("&Grande") With {.Enabled = False}})
+            Dim verticalMenuItem As New ToolStripMenuItem("&Tamaño Vertical")
+            verticalMenuItem.DropDownItems.AddRange(New ToolStripItem() {New ToolStripMenuItem("&Chico") With {.Checked = True, .Enabled = False}, New ToolStripMenuItem("&Mediano") With {.Enabled = False}, New ToolStripMenuItem("&Grande") With {.Enabled = False}})
+            Me.screenMenuItem.DropDownItems.AddRange(New ToolStripItem() {horizontalMenuItem, verticalMenuItem})
 
             Me.mapScrollPanel.AutoScroll = True
             Me.mapScrollPanel.BackColor = Color.DimGray

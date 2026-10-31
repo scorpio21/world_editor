@@ -56,6 +56,11 @@ WinForms sobre .NET 8.
   configurado a una celda concreta.
 - `Edición > Activar pincel...` permite pintar arrastrando sobre el mapa con
   una capa y un GRH base.
+- La barra de menús reproduce la jerarquía declarada en `Codigo/frmMain.frm`:
+  `Archivo`, `Edición`, `Ver`, `Paneles`, `Opciones`, `Ayuda` y `Pantalla`,
+  incluidos sus separadores, submenús y atajos. Las entradas cuyo comportamiento
+  VB6 todavía no está migrado permanecen deshabilitadas para no presentar una
+  operación falsa.
 - Estructuras, constantes y estado de datos documentados.
 - DirectX 7, DirectSound, DirectMusic, ADO y el renderer todavía no están
   implementados.

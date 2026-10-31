@@ -70,6 +70,12 @@ paridad visual con DirectDraw.
 - Añadido `Edición > Activar pincel...`: configura capa y GRH base y permite
   pintar arrastrando el botón izquierdo sobre la superficie. El pincel se
   desactiva al abrir o crear otro mapa.
+- Rehecha la barra de menús a partir de las declaraciones reales de
+  `Codigo/frmMain.frm`: se mantienen los siete menús principales, el orden de
+  los separadores, los submenús `Insertar`, `Quitar`, `Funciones`, `...Capas`,
+  `Actualizar Indices de...`, `Tamaño Horizontal` y `Tamaño Vertical`, además
+  de los atajos declarados por VB6. Las opciones todavía no migradas se dejan
+  visibles pero deshabilitadas; no se sustituyen por menús inventados.
 - `clsIniReader` registra las páginas de códigos de .NET 8 para conservar la
   lectura ANSI/CP1252 de los INI históricos.
 
@@ -95,6 +101,10 @@ paridad visual con DirectDraw.
 - La vista previa avanzada y las operaciones de autocompletado por selección
   todavía no están migradas; el modo mosaico se aplica al rellenado global,
   a la pintura explícita y al pincel continuo.
+- Aunque la jerarquía y los textos de la barra ya coinciden con el formulario
+  VB6, varias acciones de `Paneles`, `Opciones`, exportación y funciones
+  avanzadas siguen pendientes de implementación; por eso su compatibilidad
+  funcional no debe considerarse 100 %.
 
 ## Verificación
 
