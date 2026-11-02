@@ -1,10 +1,12 @@
 Imports System.Drawing
 Imports System.IO
 Imports System.Windows.Forms
+Imports System.ComponentModel
 Imports WorldEditorNet.WorldEditorNet.Core
 Imports System.Collections.Generic
 
 Namespace WorldEditorNet
+
     Public Class MapSurfaceControl
         Inherits Control
 
@@ -415,7 +417,9 @@ Namespace WorldEditorNet
             TabStop = True
             UpdateSurfaceSize()
             AddHandler _animationTimer.Tick, AddressOf AnimationTimer_Tick
-            _animationTimer.Start()
+            If LicenseManager.UsageMode <> LicenseUsageMode.Designtime Then
+                _animationTimer.Start()
+            End If
         End Sub
 
         Public Sub ResetSelection()

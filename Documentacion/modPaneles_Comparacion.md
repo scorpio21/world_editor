@@ -35,7 +35,7 @@ los paneles equivalentes de translados, NPCs, objetos y triggers.
 | `VerFuncion` para NPCs | `Ver > ...NPC's` | Marcador diagnóstico |
 | `VerFuncion` para objetos | `Ver > ...Objetos` | Marcador diagnóstico |
 | `VerFuncion` para triggers | `Ver > ...Trigger's` | Marcador diagnóstico |
-| paneles de edición F5–F12 | no existen controles WinForms equivalentes | Pendiente |
+| paneles de edición F5–F12 | barra y lateral creados; controles específicos aún no migrados | Parcialmente implementado |
 | `Filtrar` | no existe aún una lista de recursos equivalente | Pendiente |
 | `VistaPreviaDeSup` | recorte BMP básico en la superficie | Parcialmente implementado |
 
@@ -52,6 +52,10 @@ paneles WinForms en el diseñador y conectarlos después a `VerFuncion` y
 Se añadió `LegacyPanelButton.vb`, un control WinForms editable desde el
 diseñador que reproduce la parte visual común de `lvButtons_H`: forma
 diagonal, gradiente, hover, pulsación, selección y propiedad de imagen. La
-barra superior de `MainForm` ya contiene los siete controles equivalentes.
+distribución de `MainForm` también incluye ya el lateral de información y el
+área de funciones que preceden a los controles del panel original. Los clics
+de los siete botones cambian la selección y el mensaje de estado; no se han
+inventado controles funcionales que todavía no estén migrados. La barra
+superior de `MainForm` ya contiene los siete controles equivalentes.
 La imagen de cada botón queda pendiente de extraerse de `frmMain.frx` para
 conservar los recursos originales.

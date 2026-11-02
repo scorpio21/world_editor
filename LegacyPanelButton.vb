@@ -4,7 +4,10 @@ Imports System.Drawing
 Imports System.Windows.Forms
 
 Namespace WorldEditorNet
+
     <DefaultEvent("Click")>
+    <DesignTimeVisible(True)>
+    <ToolboxItem(True)>
     Public Class LegacyPanelButton
         Inherits Control
 
@@ -37,6 +40,7 @@ Namespace WorldEditorNet
             Set(value As Boolean)
                 If _diagonal = value Then Return
                 _diagonal = value
+                UpdateShapeRegion()
                 Invalidate()
             End Set
         End Property
@@ -76,12 +80,49 @@ Namespace WorldEditorNet
 
         Public Sub New()
             SetStyle(ControlStyles.UserPaint Or ControlStyles.AllPaintingInWmPaint Or
-                     ControlStyles.OptimizedDoubleBuffer Or ControlStyles.ResizeRedraw, True)
+                     ControlStyles.OptimizedDoubleBuffer Or ControlStyles.ResizeRedraw Or
+                     ControlStyles.SupportsTransparentBackColor, True)
             TabStop = True
             Font = New Font("Arial", 8.25F, FontStyle.Regular)
             ForeColor = Color.Black
-            BackColor = Color.FromArgb(190, 245, 226)
+            BackColor = Color.Transparent
             Size = New Size(130, 66)
+            UpdateShapeRegion()
+        End Sub
+
+        Private Function CreateShapePath() As GraphicsPath
+            Dim path As New GraphicsPath()
+            Dim bounds = New Rectangle(1, 1, Math.Max(0, Width - 3), Math.Max(0, Height - 3))
+
+            If _diagonal AndAlso bounds.Width >= 20 Then
+                path.AddPolygon({
+                    New Point(bounds.Left, bounds.Top),
+                    New Point(bounds.Right - 16, bounds.Top),
+                    New Point(bounds.Right, bounds.Top + bounds.Height \ 2),
+                    New Point(bounds.Right - 16, bounds.Bottom),
+                    New Point(bounds.Left, bounds.Bottom),
+                    New Point(bounds.Left + 16, bounds.Top + bounds.Height \ 2)})
+            Else
+                path.AddRectangle(bounds)
+            End If
+
+            Return path
+        End Function
+
+        Private Sub UpdateShapeRegion()
+            If Width < 2 OrElse Height < 2 Then Return
+
+            Using path = CreateShapePath()
+                Dim newRegion As New Region(path)
+                Dim oldRegion = Region
+                Region = newRegion
+                If oldRegion IsNot Nothing Then oldRegion.Dispose()
+            End Using
+        End Sub
+
+        Protected Overrides Sub OnResize(e As EventArgs)
+            UpdateShapeRegion()
+            MyBase.OnResize(e)
         End Sub
 
         Protected Overrides Sub OnPaint(e As PaintEventArgs)
@@ -94,18 +135,7 @@ Namespace WorldEditorNet
             If _hovered Then baseColor = ControlPaint.Light(baseColor, 0.18F)
             If _pressed Then baseColor = ControlPaint.Dark(baseColor, 0.12F)
 
-            Using path As New GraphicsPath()
-                If _diagonal AndAlso bounds.Width >= 20 Then
-                    path.AddPolygon({
-                        New Point(bounds.Left, bounds.Top),
-                        New Point(bounds.Right - 16, bounds.Top),
-                        New Point(bounds.Right, bounds.Top + bounds.Height \ 2),
-                        New Point(bounds.Right - 16, bounds.Bottom),
-                        New Point(bounds.Left, bounds.Bottom),
-                        New Point(bounds.Left + 16, bounds.Top + bounds.Height \ 2)})
-                Else
-                    path.AddRectangle(bounds)
-                End If
+            Using path = CreateShapePath()
 
                 Using brush As New LinearGradientBrush(bounds, ControlPaint.Light(baseColor, 0.25F),
                                                        ControlPaint.Dark(baseColor, 0.12F),

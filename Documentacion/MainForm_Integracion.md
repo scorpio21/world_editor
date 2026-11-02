@@ -106,12 +106,17 @@ paridad visual con DirectDraw.
   avanzadas siguen pendientes de implementación; por eso su compatibilidad
   funcional no debe considerarse 100 %.
 - El análisis de `modPaneles.bas` está documentado en
-  `Documentacion/modPaneles_Comparacion.md`. Los paneles F5–F12 siguen
-  pendientes porque el formulario WinForms todavía no tiene sus controles
-  equivalentes; mantenerlos deshabilitados evita acciones vacías.
+  `Documentacion/modPaneles_Comparacion.md`. La barra F5–F12 ya permite
+  seleccionar el panel y actualiza el estado, pero sus controles específicos
+  siguen pendientes; no se presentan acciones vacías como si ya estuvieran
+  migradas.
 - La barra superior ya usa `LegacyPanelButton`, equivalente WinForms del
   `lvButtons_H` incluido como `Codigo/LaVolpe Button/lvButtons.ctl`. El control
   se puede editar desde el diseñador y no requiere registrar el OCX VB6.
+- El formulario ya conserva la distribución principal de `frmMain`: panel
+  lateral izquierdo para la información y funciones, y la barra F5–F12 a la
+  derecha. Los clics actualizan la selección y el estado, pero todavía no
+  muestran los controles específicos de `VerFuncion`.
   Actualmente reproduce forma, gradiente, hover y selección; la extracción de
   los iconos de `frmMain.frx` y la visibilidad de los paneles de edición quedan
   para la siguiente iteración.

@@ -3,6 +3,7 @@ Imports System.Windows.Forms
 Imports WorldEditorNet.WorldEditorNet.Core
 
 Namespace WorldEditorNet
+
     Public Partial Class SurfaceConfigForm
         Public Property Settings As SurfacePatternSettings
 

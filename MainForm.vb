@@ -4,7 +4,8 @@ Imports System.IO
 Imports System.Windows.Forms
 
 Namespace WorldEditorNet
-    Public Partial Class MainForm
+
+    Partial Public Class MainForm
         Private _document As MapV1Document
         Private _mapPath As String = String.Empty
         Private _settings As WorldEditorSettings
@@ -14,21 +15,6 @@ Namespace WorldEditorNet
 
         Public Sub New()
             InitializeComponent()
-        End Sub
-
-        Private Sub ConfigurePanelButton(button As LegacyPanelButton, caption As String, index As Integer)
-            Dim widths() As Integer = {130, 130, 130, 130, 145, 130, 130}
-            Dim left As Integer = 4
-            For i As Integer = 0 To index - 1
-                left += widths(i) + 2
-            Next
-
-            button.Name = $"selectPanel{index}"
-            button.Text = caption
-            button.Size = New Size(widths(index), 64)
-            button.Location = New Point(left, 3)
-            button.Selected = (index = 0)
-            button.TabIndex = index
         End Sub
 
         Private Sub SurfacePanelButton_Click(sender As Object, e As EventArgs) Handles surfacePanelButton.Click
@@ -67,9 +53,91 @@ Namespace WorldEditorNet
                 button.Selected = False
             Next
 
-            Dim selected = DirectCast(functionBarPanel.Controls(index), LegacyPanelButton)
+            Dim selected = {
+                surfacePanelButton, transfersPanelButton, blockedPanelButton,
+                npcsPanelButton, hostileNpcsPanelButton, objectsPanelButton,
+                triggersPanelButton}(index)
             selected.Selected = True
+            SetFunctionMode(index)
             statusLabel.Text = $"Panel seleccionado: {caption} (F{If(index < 5, index + 5, If(index = 5, 11, 12))})"
+            StatTxt.Text = $"Panel {caption} seleccionado."
+        End Sub
+
+        Private Sub SetFunctionMode(index As Integer)
+            surfaceFunctionPanel.Visible = index = 0
+            transferFunctionPanel.Visible = index = 1
+            blockingFunctionPanel.Visible = index = 2
+            npcFunctionPanel.Visible = index = 3
+            hostileNpcFunctionPanel.Visible = index = 4
+            objectFunctionPanel.Visible = index = 5
+            triggerFunctionPanel.Visible = index = 6
+
+            Dim surfaceControlsVisible = index = 0
+            removeSurfaceLayerButton.Visible = surfaceControlsVisible
+            removeSurfaceAllLayersButton.Visible = surfaceControlsVisible
+            selectSurfaceButton.Visible = surfaceControlsVisible
+            PreviewGrh.Visible = surfaceControlsVisible
+
+            If surfaceControlsVisible Then
+                StatTxt.Location = New Point(16, 672)
+                StatTxt.Size = New Size(290, 37)
+            Else
+                StatTxt.Location = New Point(16, 418)
+                StatTxt.Size = New Size(290, 285)
+            End If
+        End Sub
+
+        Private Sub ClearFunctionsButton_Click(sender As Object, e As EventArgs) Handles clearFunctionsButton.Click
+            For Each button As LegacyPanelButton In {
+                surfacePanelButton, transfersPanelButton, blockedPanelButton,
+                npcsPanelButton, hostileNpcsPanelButton, objectsPanelButton,
+                triggersPanelButton}
+                button.Selected = False
+            Next
+
+            surfaceFunctionPanel.Visible = False
+            transferFunctionPanel.Visible = False
+            blockingFunctionPanel.Visible = False
+            npcFunctionPanel.Visible = False
+            hostileNpcFunctionPanel.Visible = False
+            objectFunctionPanel.Visible = False
+            triggerFunctionPanel.Visible = False
+            removeSurfaceLayerButton.Visible = False
+            removeSurfaceAllLayersButton.Visible = False
+            selectSurfaceButton.Visible = False
+            PreviewGrh.Visible = False
+            StatTxt.Location = New Point(16, 418)
+            StatTxt.Size = New Size(290, 285)
+
+            surfacePanelButton.Selected = True
+            StatTxt.Text = "Hace clic derecho sobre la celda para obtener la información."
+            statusLabel.Text = "Funciones quitadas"
+        End Sub
+
+        Private Sub MainForm_KeyDown(sender As Object, e As KeyEventArgs) Handles MyBase.KeyDown
+            Select Case e.KeyCode
+                Case Keys.F4
+                    ClearFunctionsButton_Click(clearFunctionsButton, EventArgs.Empty)
+                Case Keys.F5
+                    SelectPanelMode(0, "Superficie")
+                Case Keys.F6
+                    SelectPanelMode(1, "Translados")
+                Case Keys.F7
+                    SelectPanelMode(2, "Bloqueos")
+                Case Keys.F8
+                    SelectPanelMode(3, "NPC's")
+                Case Keys.F9
+                    SelectPanelMode(4, "NPC's Hostiles")
+                Case Keys.F11
+                    SelectPanelMode(5, "Objetos")
+                Case Keys.F12
+                    SelectPanelMode(6, "Trigger's")
+                Case Else
+                    Return
+            End Select
+
+            e.Handled = True
+            e.SuppressKeyPress = True
         End Sub
 
         Private Sub MainForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
@@ -505,6 +573,20 @@ Namespace WorldEditorNet
             ToggleViewItem(triggersMenuItem, Sub(value) mapSurface.ShowTriggers = value)
         End Sub
 
+        ' Equivalentes de los eventos explícitos del frmMain.frm original.
+        ' CBVerCuadricula y CBVerBloqueosA no tenían procedimiento Click en VB6.
+        Private Sub CBVerBloqueosT_Click(sender As Object, e As EventArgs) Handles CBVerBloqueosT.Click
+            BlockedMenuItem_Click(blockedMenuItem, EventArgs.Empty)
+        End Sub
+
+        Private Sub CBVerTraslados_Click(sender As Object, e As EventArgs) Handles CBVerTraslados.Click
+            TransladosMenuItem_Click(transladosMenuItem, EventArgs.Empty)
+        End Sub
+
+        Private Sub CBVerTriggers_Click(sender As Object, e As EventArgs) Handles CBVerTriggers.Click
+            TriggersMenuItem_Click(triggersMenuItem, EventArgs.Empty)
+        End Sub
+
         Private Sub SaveConfigMenuItem_Click(sender As Object, e As EventArgs) Handles saveConfigMenuItem.Click
             saveConfigMenuItem.Checked = Not saveConfigMenuItem.Checked
         End Sub
@@ -599,6 +681,10 @@ Namespace WorldEditorNet
 
             Dim cell As MapV1Cell = _document.Cells(mapSurface.SelectedX, mapSurface.SelectedY)
             statusLabel.Text = $"X={mapSurface.SelectedX} Y={mapSurface.SelectedY} GRH={cell.Graphic1} Bloqueado={cell.Blocked} Trigger={cell.Trigger}"
+        End Sub
+
+        Private Sub COPIAR_GRH3_Click(sender As Object, e As EventArgs) Handles COPIAR_GRH3.Click
+
         End Sub
     End Class
 End Namespace

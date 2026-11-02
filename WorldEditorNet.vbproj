@@ -15,4 +15,22 @@
     <EmbeddedResource Remove="WorldEditorNet.Tests\**" />
     <None Remove="WorldEditorNet.Tests\**" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Update="MainForm.vb" />
+    <Compile Update="MainForm.Designer.vb">
+      <DependentUpon>MainForm.vb</DependentUpon>
+    </Compile>
+    <Compile Update="Properties\EditorResources.Designer.vb">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>EditorResources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\EditorResources.resx">
+      <CustomToolNamespace>My.Resources</CustomToolNamespace>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>EditorResources.Designer.vb</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
 </Project>

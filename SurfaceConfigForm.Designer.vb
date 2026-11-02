@@ -2,6 +2,7 @@ Imports System.Drawing
 Imports System.Windows.Forms
 
 Namespace WorldEditorNet
+
     <Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
     Partial Class SurfaceConfigForm
         Inherits Form

@@ -2,6 +2,7 @@ Imports System
 Imports System.Windows.Forms
 
 Namespace WorldEditorNet
+
     Public Module Program
         <STAThread>
         Public Sub Main()
