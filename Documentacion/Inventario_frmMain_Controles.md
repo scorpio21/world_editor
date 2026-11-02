@@ -32,7 +32,7 @@ El formulario VB6 contiene 227 declaraciones visuales, incluyendo elementos de m
 - ⚠️ `picRadar` está representado por `radarPanel`; contiene `Shape1`,
   `ApuntadorRadar`, `POSX` y `FPS`. Las formas VB6 se representan mediante
   `Panel`, porque WinForms no tiene un control `Shape` nativo.
-- ✅ `pPaneles`: en VB6 es un `PictureBox` real de `293×293 px` (4395 twips), situado en `(8,120)` y conteniendo directamente los controles funcionales. En .NET está colocado físicamente dentro de `leftSidebar` mediante el diseñador.
+- ✅ `pPaneles`: en VB6 es un `PictureBox` real de `293×293 px` (4395 twips), situado en `(8,120)` y usado como fondo/contenedor visual. En WinForms se mantiene como `PictureBox` dentro de `leftSidebar`; `functionContentPanel` permanece como control hermano superpuesto, porque el diseñador no permite usar un `PictureBox` como contenedor visual de controles.
 - ✅ Distribución de translados de `pPaneles`: `transferMapTextBox`, `transferXTextBox` y `transferYTextBox` ocupan las posiciones equivalentes a `tTMapa`, `tTX` y `tTY`; los botones `insertTransferButton`, `insertTransferObjectButton`, `unionManualButton`, `unionAutoButton` y `removeTransferButton` están colocados con la separación del `.frm` original.
 - ✅ Controles inferiores directos de `pPaneles`: `removeSurfaceLayerButton`, `removeSurfaceAllLayersButton` y `selectSurfaceButton` están fuera de `surfaceFunctionPanel`, como en el VB6, y conservan la distribución inferior izquierda/derecha.
 - ✅ Los grupos de funciones `Bloqueos`, `NPC`, `NPC hostil`, `Objetos` y `Triggers` usan ahora el área base de `pPaneles` (`293×293 px`). Sus listas, filtros y botones inferiores se han colocado con la conversión de las coordenadas VB6 (15 twips ≈ 1 px).
@@ -279,7 +279,7 @@ Todos estos controles deben existir físicamente en el diseñador de `MainForm` 
 - ✅ Contenedores visuales equivalentes a los grupos de composición del tile.
 - ✅ Temporizador visual `autoSaveTimer` preparado para el guardado automático.
 - ✅ `PreviewGrh` añadido como `PictureBox` del diseñador.
-- ⚠️ `pPaneles`, `Picture2`, `Picture5`, `Picture6`, `Picture7`, `Picture8`, `Picture9` y `Picture11` deben estar declarados como `PictureBox` en el diseñador. `pPaneles` debe volver a colocarse dentro de `leftSidebar`; `Picture2` sí está superpuesto con `StatTxt` y contiene `PreviewGrh`.
+- ✅ `pPaneles`, `Picture2`, `Picture5`, `Picture6`, `Picture7`, `Picture8`, `Picture9` y `Picture11` están declarados como `PictureBox` en el diseñador. `pPaneles` está dentro de `leftSidebar`; `functionContentPanel` se superpone como capa funcional. `Picture2` está superpuesto con `StatTxt` y contiene `PreviewGrh`.
 - ✅ Los controles físicos `COPIAR_GRH0..3` y `MemoriaAuxiliar` están colocados
   en el diseñador con las dimensiones convertidas desde `frmMain.frm`.
 - ✅ `StatTxt` como área visual de estado del tile, con el nombre original del VB6.
@@ -291,7 +291,7 @@ Todos estos controles deben existir físicamente en el diseñador de `MainForm` 
   `Shape1`, `ApuntadorRadar`, `POSX` y `FPS` están colocados dentro, junto
   con el visor `radarPictureBox`.
 - ⚠️ `tileCompositionPanel` contiene los grupos visuales y las etiquetas de capas/traslado/NPC/objeto/bloqueo; faltan algunos campos originales y sus datos dinámicos.
-- ⚠️ `functionContentPanel` es el equivalente de `pPaneles`: contiene los siete paneles de función (`surfaceFunctionPanel`, `transferFunctionPanel`, `blockingFunctionPanel`, `npcFunctionPanel`, `hostileNpcFunctionPanel`, `objectFunctionPanel` y `triggerFunctionPanel`) y ahora usa el tamaño base del contenedor VB6 (`293×293 px`). Falta completar el cambio de visibilidad y carga de datos equivalente a `VerFuncion`.
+- ⚠️ `functionContentPanel` es la capa funcional superpuesta a `pPaneles`; contiene los siete paneles de función (`surfaceFunctionPanel`, `transferFunctionPanel`, `blockingFunctionPanel`, `npcFunctionPanel`, `hostileNpcFunctionPanel`, `objectFunctionPanel` y `triggerFunctionPanel`) y usa el tamaño base del contenedor VB6 (`293×293 px`). Falta completar el cambio de visibilidad y carga de datos equivalente a `VerFuncion`.
 - ⚠️ Los siete `LegacyPanelButton` sustituyen visualmente a `SelectPanel(0..6)`, pero todavía falta completar la lógica equivalente de `VerFuncion`.
 
 ### Colocados en el diseñador, pendientes de fidelidad funcional
@@ -315,7 +315,7 @@ Todos estos controles deben existir físicamente en el diseñador de `MainForm` 
 ### Pendiente antes de empezar la lógica completa
 
 - ⏳ Verificar visualmente en el diseñador la posición, tamaño y orden Z de todos los paneles de función.
-- ⏳ Reorganizar desde el diseñador `pPaneles` para que tenga el tamaño del VB6 y sea el contenedor estructural de los paneles funcionales.
+- ✅ Mantener `pPaneles` como fondo `PictureBox` y `functionContentPanel` como capa hermana superpuesta; WinForms no permite reproducir mediante el diseñador la relación de contenedor del `PictureBox` VB6.
 - ⏳ Implementar después la matriz de visibilidad de `modPaneles.bas` (`VerFuncion`) sin crear controles desde `MainForm.vb`.
 
 ### Resultado de la auditoría del inventario
