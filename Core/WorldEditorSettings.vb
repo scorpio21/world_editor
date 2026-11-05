@@ -85,7 +85,7 @@ Namespace WorldEditorNet.Core
             settings.DirIndex = ResolveAndValidateDirectory(
                 reader.GetValue("PATH", "DirIndex"), settings.IniPath, "INIT")
             settings.DirDats = ResolveAndValidateDirectory(
-                reader.GetValue("PATH", "DirDats"), settings.IniPath, "DATS")
+                reader.GetValue("PATH", "DirDats"), settings.IniPath, "DATS", "Dat")
 
             Dim lastPosition As String = reader.GetValue("MOSTRAR", "LastPos")
             settings.UserPos = New Position With {
@@ -133,7 +133,18 @@ Namespace WorldEditorNet.Core
 
         Private Shared Function ResolveAndValidateDirectory(ByVal configuredPath As String,
                                                               ByVal appPath As String,
-                                                              ByVal fallbackName As String) As String
+                                                              ByVal fallbackName As String,
+                                                              Optional ByVal legacyFallbackName As String = "") As String
+            'El instalador puede incluir los recursos junto al ejecutable. En ese
+            'caso tienen prioridad sobre las rutas históricas del INI del VB6.
+            Dim bundledPath As String = EnsureTrailingSeparator(Path.Combine(appPath, fallbackName))
+            If Directory.Exists(bundledPath) Then Return bundledPath
+
+            If Not String.IsNullOrWhiteSpace(legacyFallbackName) Then
+                Dim legacyBundledPath As String = EnsureTrailingSeparator(Path.Combine(appPath, legacyFallbackName))
+                If Directory.Exists(legacyBundledPath) Then Return legacyBundledPath
+            End If
+
             Dim resolved As String = AutoCompletaPath(configuredPath, appPath)
             If resolved = "\" Then
                 resolved = EnsureTrailingSeparator(Path.Combine(appPath, fallbackName))

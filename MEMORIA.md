@@ -103,11 +103,10 @@ comportamiento comprobado y sin inventar equivalencias.
   controles de translados usan las posiciones del VB6 y los botones inferiores
   de quitar/insertar superficie son hijos directos de `functionContentPanel`,
   no de `surfaceFunctionPanel`.
-- ⚠️ Corrección estructural pendiente: en VB6 `pPaneles` es el `PictureBox`
-  contenedor real de esos controles; en .NET `pPaneles` sigue siendo un
-  `PictureBox` oculto/vacío y `functionContentPanel` es el contenedor visible.
-  El área visual sí usa la posición `(8,120)` y el tamaño `293×293 px`, pero
-  la jerarquía todavía no es idéntica.
+- ⚠️ En VB6 `pPaneles` es el `PictureBox` contenedor real de esos controles;
+  en .NET `pPaneles` conserva la imagen de fondo `imagenfondo` y
+  `functionContentPanel` actúa como capa funcional superpuesta. La jerarquía
+  no es idéntica por la limitación del diseñador WinForms con `PictureBox`.
 - ✅ Se ajustaron los paneles de Bloqueos, NPC, NPC hostil, Objetos y Triggers
   al área base de `pPaneles` y se trasladaron sus listas, filtros y botones a
   las coordenadas convertidas del `.frm`.
@@ -169,12 +168,248 @@ Resultado verificado: ambos builds sin errores ni advertencias y
 - ✅ `WorldEditorNet.vbproj` usa ahora únicamente `Properties\EditorResources.resx`
   para estos seis recursos.
 - ✅ Compilación Release verificada sin errores ni advertencias.
+- ✅ Se añadió `imagenfondo` a `EditorResources.resx` y se expuso mediante el
+  módulo de compatibilidad de recursos para que el diseñador VB compile.
+- ✅ El estado inicial ya no selecciona `Superficie`: todos los paneles de
+  funciones y `functionContentPanel` empiezan ocultos, dejando visible el
+  fondo de `pPaneles`.
 
 ## Siguiente paso
 
 Completar el resto del diseño visual de `frmMain.frm` desde el diseñador:
 visor de GRH, pestañas de mapas, nombres indexados exactos y formas/separadores.
-Después extraer de `frmMain.frx` los siete iconos originales y asignarlos
-desde el diseñador; finalmente migrar por grupos los controles de `VerFuncion`
+Después decidir si se incorporan los siete iconos originales desde el diseñador;
+por ahora los botones permanecen deliberadamente solo con texto. Finalmente
+migrar por grupos los controles de `VerFuncion`
 y conectar su comportamiento con `EstSelectPanel`, empezando por Superficie y
 Translados.
+
+### Fuentes disponibles
+
+Se han localizado en `Assets/fuentes` las fuentes `Caribbean.ttf` y `Ringbearer
+Medium.TTF` (además de sus variantes `.eot`). No se han aplicado todavía al
+formulario porque `frmMain.frm` utiliza `Arial`, `MS Serif`, `MS Sans Serif` y
+`Tahoma`; sustituirlas ahora modificaría la fidelidad visual del original.
+Podrán incorporarse posteriormente mediante el diseñador si se decide usar
+una apariencia personalizada.
+
+### Última verificación
+
+- ✅ `LegacyPanelButton` conserva la propiedad de compatibilidad `ButtonImage`,
+  pero los siete botones de la barra superior quedan actualmente sin imagen
+  asignada: se muestran únicamente con su texto, como se solicitó.
+- ✅ Se eliminaron las asignaciones de imágenes de los siete botones superiores;
+  el diseñador y la aplicación los muestran solo con texto.
+- ✅ Build Release correcto: 0 advertencias, 0 errores.
+- ✅ Build Debug verificado el 03/11/2026: 0 advertencias, 0 errores.
+- ✅ Issue #1: título, `WindowState`, `MaximizeBox`, `StartPosition` y
+  `KeyPreview` verificados en `MainForm.Designer.vb` después de guardarlos
+  desde el diseñador.
+- ✅ `BackColor` del formulario verificado desde el diseñador:
+  `Color.FromArgb(224,224,224)`.
+- ✅ Issue #1 cerrado en el apartado visual: las posiciones finales se
+  verificaron y guardaron desde el diseñador. `rightContentPanel=(308,24)`,
+  `mapScrollPanel=(0,82)` con `Padding=0`, y tanto `mapSurface` como
+  `MainViewShp` quedan en `(0,0)` dentro del área de mapa. Ambos visores
+  conservan el tamaño `892x567`.
+- ✅ `functionContentPanel.Visible` quedó establecido como `False` en el
+  diseñador para que el estado inicial muestre `pPaneles`, igual que VB6.
+- ✅ `Documentacion/Inventario_frmMain_Controles.md` refleja esta verificación
+  y deja como pendiente solo revisar el orden Z al activar cada panel.
+- ⚠️ Visual Studio puede seguir dibujando el panel oculto cuando está
+  seleccionado en el Document Outline; esa representación es del diseñador,
+  no implica que esté visible al ejecutar.
+
+### 03/11/2026 — Diseñador y orden Z
+
+- ✅ Se resolvió la referencia heredada del diseñador a
+  `menuStrip1_ItemClicked`; `MainForm` vuelve a abrirse correctamente en modo
+  Diseño.
+- ✅ Se ajustó exclusivamente mediante el diseñador el orden Z de la interfaz:
+  `pPaneles` queda como fondo y `functionContentPanel` por encima al activarse.
+- ✅ No se modificaron tamaños ni posiciones de los controles ajustados por el
+  usuario.
+- ✅ Build Debug verificado: 0 advertencias y 0 errores.
+
+### Pendiente estructural — superficie del mapa
+
+- ⚠️ En el VB6 original el mapa se presenta mediante `MainViewShp`.
+- ⚠️ La migración actual usa `mapSurface` como renderer y mantiene
+  `MainViewShp` oculto dentro de `mapScrollPanel`; esto no debe considerarse
+  equivalente al original.
+- ⏳ Antes de conectar más funciones del editor hay que decidir y adaptar el
+  render para que `MainViewShp` sea la superficie visual principal, respetando
+  su tamaño, posición y orden Z. `mapSurface` y `mapScrollPanel` solo deben
+  permanecer como soporte interno si no alteran ese comportamiento.
+
+### Issues de la fase de diseño — 03/11/2026
+
+La fase visual queda dividida en estas tareas del repositorio
+`scorpio21/world_editor`:
+
+- #1 Auditoría final de tamaños, posiciones y anclajes.
+- #2 Alinear `MainViewShp`, `mapSurface` y `mapScrollPanel`.
+- #3 Corregir el lateral izquierdo y el radar.
+- #4 Completar orden Z y visibilidad inicial.
+- #5 Ajustar la barra superior y la fila `MapPest`.
+- #6 Completar los paneles funcionales del diseñador.
+- #7 Revisar recursos, fuentes e imágenes.
+- #8 Validar y congelar el diseño antes de conectar funcionalidad.
+
+No se debe comenzar la conexión funcional completa hasta cerrar la issue #8.
+
+### 04/11/2026 — Issue #2: entradas de render y datos de ejecución
+
+- ✅ Se verificó que `MapSurfaceControl` es el control que actualmente dibuja
+  las celdas y busca los BMP mediante `GraphicsIndex` y `GraphicsDirectory`.
+- ✅ `WorldEditorNet.vbproj` copia al resultado `Datos/WorldEditor.ini`,
+  `INIT/Graficos.ind`, `MIDI/*` y `Maps/*`, conservando sus carpetas.
+- ✅ Se comprobó en `bin/Debug/net8.0-windows` la presencia de `MIDI/1.MID` y
+  `INIT/Graficos.ind` (180693 bytes).
+- ✅ La configuración original carga ahora las rutas de gráficos e índice sin
+  producir el mensaje de directorio `Graficos` inexistente.
+- ✅ Build Debug y prueba smoke de `WorldEditorNet.Tests`: correctos, 0
+  advertencias y 0 errores.
+- ⚠️ El arranque en mapa nuevo sigue mostrando la cuadrícula; es esperado
+  porque todavía no se ha abierto un `.map` con superficies dibujables.
+- ⏳ Falta validar con `Mapa1.map` que cada GRH se dibuje desde el índice y
+  completar la equivalencia funcional entre `MainViewShp` del VB6 y
+  `mapSurface` del .NET. El issue #2 no se cierra todavía.
+
+- ✅ Se añadió también `Maps/*` al contenido copiado por el proyecto para que
+  los mapas de prueba acompañen a `INIT` y `MIDI` en `bin/Debug` y en futuras
+  publicaciones.
+- ✅ Corrección: las tres carpetas se toman de `WorldEditorNet/INIT`,
+  `WorldEditorNet/MIDI` y `WorldEditorNet/Maps`, que son las carpetas que el
+  usuario incorporó al proyecto; no de rutas `..` externas.
+- ✅ Tras recompilar y arrancar una instancia limpia, la composición de
+  `leftSidebar`, `rightContentPanel`, `functionBarPanel` y `mapScrollPanel`
+  mantiene la separación prevista; el solapamiento mostrado corresponde a una
+  instancia/posición anterior y no se reproduce en la ejecución recién
+  compilada.
+
+### 04/11/2026 — Recursos locales del editor
+
+- ✅ La configuración se toma del `Datos/WorldEditor.ini` original ubicado en
+  `WorldEditor/Datos`, no de `utilidades/Datos/Conf.ini`.
+- ✅ Se añadieron los gráficos locales de `WorldEditorNet/Graficos` al
+  resultado de compilación.
+- ✅ El cargador prioriza las carpetas locales junto al ejecutable (`Graficos`,
+  `INIT`, `MIDI` y `DATS`) sobre las rutas históricas absolutas del INI. Esto
+  conserva el INI de VB6 y mantiene el ejecutable portable.
+- ✅ Debug compila sin advertencias ni errores y el resultado contiene el INI,
+  `Graficos.ind`, BMP, MIDI, DATS y mapas de prueba.
+- ⏳ Sigue pendiente abrir `Mapa1.map` desde la aplicación y verificar
+  visualmente que las superficies se dibujan con esos recursos.
+
+### 04/11/2026 — Corrección de la carpeta DATS
+
+- ✅ Se confirmó que los datos de VB6 están en `WorldEditorNet/DATS`.
+- ✅ `WorldEditor.ini` usa ahora `DirDats=DATS`.
+- ✅ El cargador prioriza `DATS` junto al ejecutable y conserva `Dat` solo como
+  fallback de compatibilidad.
+- ✅ El proyecto copia `DATS/*.dat` al directorio de salida.
+- ✅ Build Debug verificado: 0 advertencias y 0 errores.
+
+### 04/11/2026 — Primera conexión funcional del panel Superficie
+
+- ✅ Al seleccionar una superficie, el editor actualiza el GRH y la capa como
+  `lListado(0)_Click` del VB6.
+- ✅ El estado informa también si la superficie está marcada como bloqueada.
+- ✅ Build Debug verificado: 0 advertencias y 0 errores.
+- ⏳ Pendiente: conectar las acciones de insertar/quitar superficie y el
+  preview gráfico con el comportamiento completo de `modPaneles.bas`.
+
+### 04/11/2026 — Edición de superficies sobre el mapa
+
+- ✅ `Insertar Superficie` activa el modo de colocación y aplica el GRH/capa
+  seleccionados al hacer clic en una celda.
+- ✅ `Quitar en esta Capa` elimina la superficie de la celda seleccionada.
+- ✅ `Quitar en Capas 2 y 3` reproduce la operación documentada de VB6 sobre
+  las capas 2 y 3.
+- ✅ Los modos se excluyen entre sí y deshabilitan los controles que el VB6
+  deshabilitaba durante cada operación.
+- ✅ Build Debug verificado: 0 advertencias y 0 errores.
+- ⏳ Pendiente: preview visual del GRH y edición de translados, bloqueos,
+  NPCs, objetos y triggers.
+
+### 04/11/2026 — Preview de GRH y translados
+
+- ✅ `PreviewGrh` ya pinta el GRH seleccionado usando `Graficos.ind`, el BMP
+  asociado y el rectángulo `X/Y/Width/Height` del índice.
+- ✅ El preview conserva el control creado en el diseñador y muestra un aviso
+  dentro del propio visor cuando el GRH o el BMP no están disponibles.
+- ✅ `insertTransferButton` escribe `ExitMap`, `ExitX` y `ExitY` en la celda
+  seleccionada, equivalentes a `TileExit.Map/X/Y` del VB6.
+- ✅ `removeTransferButton` elimina el translado de la celda seleccionada.
+- ✅ `unionManualButton` reproduce las coordenadas de borde del VB6 para los
+  bordes X<=11, X>=90, Y<=10 e Y>=91.
+- ✅ `LegacyIndicesLoader.LoadObjects` carga `DATS/OBJ.dat` con la misma
+  estructura que `CargarIndicesOBJ` y rellena `objectListBox`.
+- ✅ `insertTransferObjectButton` usa `ObjTranslado` de `WorldEditor.ini`,
+  valida `ObjType=19` y coloca el objeto con cantidad 1 junto al translado,
+  como `modEdicion.bas`.
+- ⚠️ `unionAutoButton` queda pendiente porque requiere migrar `frmUnionAdyacente`.
+
+### 04/11/2026 — Lógica base de unión automática
+
+- ✅ Se añadió `Core/AdjacentTransferService.vb` con la lógica verificable de
+  `frmUnionAdyacente.cmdAplicar_Click`.
+- ✅ Respeta los cuatro bordes, omite celdas bloqueadas y pone las coordenadas
+  destino a cero cuando el mapa destino es 0.
+- ✅ Se añadieron los perfiles de límites `Básica` y `Ulla` documentados en el
+  VB6, además de lectura de translados existentes por borde.
+- ✅ La lógica está cubierta por la prueba de humo del proyecto.
+- ⏳ Falta crear en el diseñador la ventana equivalente a `frmUnionAdyacente`
+  y enlazar sus controles al servicio; no se han inventado controles ni
+  valores en `MainForm`.
+- ✅ Build Debug y prueba de humo verificados correctamente.
+
+### 04/11/2026 — Edición de objetos
+
+- ✅ `objectListBox` selecciona el índice real de `OBJ.dat`.
+- ✅ `insertObjectFunctionButton` escribe `ObjIndex` y `ObjAmount` en la
+  celda seleccionada.
+- ✅ `removeObjectFunctionButton` limpia ambos campos, reproduciendo
+  `cQuitarFunc(2)` del VB6.
+- ✅ Los modos de insertar y quitar son excluyentes y se desactivan al cambiar
+  de panel o pulsar `Quitar Funciones`.
+- ✅ Build Debug y prueba de humo verificados correctamente.
+- ✅ `PreviewGrh` reproduce los GRH animados respetando sus frames y velocidad
+  del índice.
+- ✅ Build Debug verificado: 0 advertencias y 0 errores.
+## 04/11/2026 — Edición básica de NPCs y triggers
+
+- `LegacyIndicesLoader.LoadNpcs` carga `NPCs.dat` y `NPCs-HOSTILES.dat` con el
+  mismo desplazamiento `+500` usado por `CargarIndicesNPC` en VB6.
+- Las listas del panel NPC y NPC hostil se rellenan desde esos archivos.
+- `MapSurfaceControl` permite insertar y quitar `NpcIndex` y `Trigger` en la
+  celda seleccionada, con deshacer y marca de cambios.
+- Los botones `Insertar función`, `Quitar función`, `Insertar Trigger` y
+  `Quitar Trigger` ya tienen flujo funcional.
+- Los botones `Agregar función al azar` también ejecutan la selección aleatoria
+  sobre celdas no bloqueadas, respetando el límite de 200 del VB6.
+- La migración no crea personajes visuales del motor VB6; escribe el
+  `NpcIndex` del mapa, que es el dato persistido por el formato `.map`.
+
+## 04/11/2026 — Unión automática verificada
+
+- `AdjacentTransferService` queda verificado para los cuatro bordes, mapas de
+  destino, límites básicos/Ulla y preservación de celdas bloqueadas.
+- La prueba de humo cubre aplicación completa y limpieza con mapa `0`.
+- Pendiente de UI: crear en el diseñador el formulario equivalente a
+  `frmUnionAdyacente` (`Mapa(0..3)`, `Aplicar(0..3)`, `PosLim(0..7)`, perfiles
+  de límites y botones aplicar/cancelar/default) y conectarlo al botón
+  `unionAutoButton`. La lógica no se ejecuta desde el botón mientras esa UI no
+  exista, para no inventar valores.
+
+## 05/11/2026 — Vista de mapa y contador FPS
+
+- `MainViewShp` se muestra y se pinta en negro al abrir un mapa; permanece
+  oculto al crear un mapa nuevo, igual que el flujo visual del VB6.
+- El `mapSurface` sigue siendo el renderizador contenido dentro de
+  `MainViewShp`, sin modificar posiciones ni tamaños del diseñador.
+- `FPS` muestra el número de repintados del visor durante el último segundo;
+  al iniciar sin mapa muestra `FPS: 0` en lugar de `FPS: ??`.
+- Build Debug verificado: 0 advertencias y 0 errores.
+

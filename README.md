@@ -64,6 +64,10 @@ WinForms sobre .NET 8.
 - `LegacyPanelButton` es la equivalencia WinForms del `lvButtons_H` de
   `Codigo/LaVolpe Button/lvButtons.ctl`: reproduce forma diagonal, gradiente,
   hover, selección e imagen desde el diseñador, sin registrar el OCX VB6.
+- El fondo visual de `pPaneles` usa el recurso `imagenfondo`, integrado en
+  `Properties/EditorResources.resx`. Al iniciar no se selecciona ningún panel
+  de funciones; `functionContentPanel` permanece oculto hasta pulsar un panel
+  F5–F12, como en el formulario VB6.
 - La barra superior ya contiene los siete paneles `Superficie`, `Translados`,
   `Bloqueos`, `NPC's`, `NPC's Hostiles`, `Objetos` y `Trigger's`.
 - Estructuras, constantes y estado de datos documentados.

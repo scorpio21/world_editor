@@ -5,6 +5,12 @@ Namespace WorldEditorNet
     ' WorldEditorNet.My.Resources dentro del namespace duplicado del proyecto.
     Namespace My.Resources
         Friend Module EditorResources
+            Friend ReadOnly Property imagenfondo As Bitmap
+                Get
+                    Return Global.WorldEditorNet.My.Resources.EditorResources.imagenfondo
+                End Get
+            End Property
+
             Friend ReadOnly Property Ojo As Bitmap
                 Get
                     Return Global.WorldEditorNet.My.Resources.EditorResources.Ojo
@@ -38,6 +44,18 @@ Namespace WorldEditorNet
             Friend ReadOnly Property Traslados As Bitmap
                 Get
                     Return Global.WorldEditorNet.My.Resources.EditorResources.Traslados
+                End Get
+            End Property
+
+            Friend ReadOnly Property superficie As Bitmap
+                Get
+                    Return Global.WorldEditorNet.My.Resources.EditorResources.superficie
+                End Get
+            End Property
+
+            Friend ReadOnly Property mapa As Bitmap
+                Get
+                    Return Global.WorldEditorNet.My.Resources.EditorResources.mapa
                 End Get
             End Property
         End Module

@@ -170,6 +170,7 @@ Namespace WorldEditorNet.Core
         Public SeleccionMap As MapBlock(,)
         Public DeSeleccionMap As MapBlock(,)
         Public SupDataArray As SupData()
+        Public TriggerNames As String()
         Public NpcDataArray As NpcData()
         Public ObjDataArray As ObjData()
         Public BodyData As tBodyData()
@@ -182,6 +183,7 @@ Namespace WorldEditorNet.Core
         Public MapData_Deshacer_Info As tDeshacerInfo()
 
         Public MaxSup As Short
+        Public NumTriggers As Short
         Public NumNPCs As Short
         Public NumNPCsHOST As Short
         Public NumOBJs As Short
@@ -205,6 +207,7 @@ Namespace WorldEditorNet.Core
             ReDim SeleccionMap(0 To XMaxMapSize, 0 To YMaxMapSize)
             ReDim DeSeleccionMap(0 To XMaxMapSize, 0 To YMaxMapSize)
             ReDim SupDataArray(0 To 0)
+            ReDim TriggerNames(0 To 0)
             ReDim NpcDataArray(0 To 0)
             ReDim ObjDataArray(0 To 0)
             ReDim BodyData(0 To 0)

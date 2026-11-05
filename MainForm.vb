@@ -13,8 +13,50 @@ Namespace WorldEditorNet
         Private _surfaceSettings As New SurfacePatternSettings()
         Private _startupMessage As String = String.Empty
 
-        Public Sub New()
+        Private Enum SurfaceEditMode
+            None
+            Insert
+            RemoveCurrentLayer
+            RemoveLayersTwoAndThree
+        End Enum
+
+        Private Enum TransferEditMode
+            None
+            Insert
+            Remove
+        End Enum
+
+        Private Enum NpcEditMode
+            None
+            InsertNormal
+            RemoveNormal
+            InsertHostile
+            RemoveHostile
+        End Enum
+
+        Private Enum TriggerEditMode
+            None
+            Insert
+            Remove
+        End Enum
+
+        Private _surfaceMode As SurfaceEditMode
+        Private _transferMode As TransferEditMode
+        Private _manualTransfer As Boolean
+        Private _insertTransferObject As Boolean
+        Private _objectInsertEnabled As Boolean
+        Private _objectRemoveEnabled As Boolean
+        Private _npcMode As NpcEditMode
+        Private _triggerMode As TriggerEditMode
+        Private _mapLoaded As Boolean
+        Private ReadOnly _fpsTimer As New Timer With {.Interval = 1000}
+        Private _framesThisSecond As Integer
+        Private ReadOnly _loadingForm As frmCargando
+
+        Public Sub New(Optional loadingForm As frmCargando = Nothing)
+            _loadingForm = loadingForm
             InitializeComponent()
+            ClearFunctionsButton_Click(clearFunctionsButton, EventArgs.Empty)
         End Sub
 
         Private Sub SurfacePanelButton_Click(sender As Object, e As EventArgs) Handles surfacePanelButton.Click
@@ -59,11 +101,20 @@ Namespace WorldEditorNet
                 triggersPanelButton}(index)
             selected.Selected = True
             SetFunctionMode(index)
+            If index <> 5 Then
+                _objectInsertEnabled = False
+                _objectRemoveEnabled = False
+                ApplyObjectEditMode()
+            End If
+            If index <> 3 AndAlso index <> 4 Then SetNpcEditMode(NpcEditMode.None)
+            If index <> 6 Then SetTriggerEditMode(TriggerEditMode.None)
             statusLabel.Text = $"Panel seleccionado: {caption} (F{If(index < 5, index + 5, If(index = 5, 11, 12))})"
             StatTxt.Text = $"Panel {caption} seleccionado."
         End Sub
 
         Private Sub SetFunctionMode(index As Integer)
+            functionContentPanel.Visible = True
+            panelStateRow.Visible = _mapLoaded
             surfaceFunctionPanel.Visible = index = 0
             transferFunctionPanel.Visible = index = 1
             blockingFunctionPanel.Visible = index = 2
@@ -78,6 +129,8 @@ Namespace WorldEditorNet
             selectSurfaceButton.Visible = surfaceControlsVisible
             PreviewGrh.Visible = surfaceControlsVisible
 
+            If index <> 1 Then SetTransferEditMode(TransferEditMode.None)
+
             If surfaceControlsVisible Then
                 StatTxt.Location = New Point(16, 672)
                 StatTxt.Size = New Size(290, 37)
@@ -88,6 +141,13 @@ Namespace WorldEditorNet
         End Sub
 
         Private Sub ClearFunctionsButton_Click(sender As Object, e As EventArgs) Handles clearFunctionsButton.Click
+            SetSurfaceEditMode(SurfaceEditMode.None)
+            SetTransferEditMode(TransferEditMode.None)
+            _objectInsertEnabled = False
+            _objectRemoveEnabled = False
+            ApplyObjectEditMode()
+            SetNpcEditMode(NpcEditMode.None)
+            SetTriggerEditMode(TriggerEditMode.None)
             For Each button As LegacyPanelButton In {
                 surfacePanelButton, transfersPanelButton, blockedPanelButton,
                 npcsPanelButton, hostileNpcsPanelButton, objectsPanelButton,
@@ -102,6 +162,8 @@ Namespace WorldEditorNet
             hostileNpcFunctionPanel.Visible = False
             objectFunctionPanel.Visible = False
             triggerFunctionPanel.Visible = False
+            functionContentPanel.Visible = False
+            panelStateRow.Visible = _mapLoaded
             removeSurfaceLayerButton.Visible = False
             removeSurfaceAllLayersButton.Visible = False
             selectSurfaceButton.Visible = False
@@ -109,7 +171,6 @@ Namespace WorldEditorNet
             StatTxt.Location = New Point(16, 418)
             StatTxt.Size = New Size(290, 285)
 
-            surfacePanelButton.Selected = True
             StatTxt.Text = "Hace clic derecho sobre la celda para obtener la información."
             statusLabel.Text = "Funciones quitadas"
         End Sub
@@ -141,9 +202,540 @@ Namespace WorldEditorNet
         End Sub
 
         Private Sub MainForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-            LoadSettings()
-            LoadGraphicsIndex()
-            CreateNewMap()
+            Try
+                _loadingForm?.SetLoadingStep(0, "Cargando configuración...")
+                LoadSettings()
+                _loadingForm?.SetLoadingStep(1, "Cargando índices de superficies...")
+                LoadLegacyIndices()
+                _loadingForm?.SetLoadingStep(4, "Cargando objetos...")
+                LoadGraphicsIndex()
+                _loadingForm?.SetLoadingStep(5, "Iniciando ventana de edición...")
+                CreateNewMap()
+                FPS.Text = "FPS: 0"
+                AddHandler _fpsTimer.Tick, AddressOf FpsTimer_Tick
+                _fpsTimer.Start()
+                radarPictureBox.SendToBack()
+                Shape1.SendToBack()
+                ApuntadorRadar.BringToFront()
+            Finally
+                If _loadingForm IsNot Nothing Then
+                    _loadingForm.Hide()
+                    _loadingForm.Dispose()
+                End If
+            End Try
+        End Sub
+
+        Private Sub MapSurface_FrameRendered(sender As Object, e As EventArgs) Handles mapSurface.FrameRendered
+            _framesThisSecond += 1
+        End Sub
+
+        Private Sub FpsTimer_Tick(sender As Object, e As EventArgs)
+            FPS.Text = $"FPS: {_framesThisSecond}"
+            _framesThisSecond = 0
+        End Sub
+
+        Private Sub MapSurface_MouseMove(sender As Object, e As MouseEventArgs) _
+            Handles mapSurface.MouseMove
+            Dim x As Integer = (e.X \ mapSurface.CellSize) + 1
+            Dim y As Integer = (e.Y \ mapSurface.CellSize) + 1
+            If x >= 1 AndAlso x <= 100 AndAlso y >= 1 AndAlso y <= 100 Then
+                POSX.Text = $"X: {x} - Y: {y}"
+                If x < 10 OrElse y < 10 OrElse x > 90 OrElse y > 90 Then
+                    POSX.ForeColor = Color.Red
+                Else
+                    POSX.ForeColor = Color.White
+                End If
+            End If
+        End Sub
+
+        Private Sub RadarPictureBox_MouseClick(sender As Object, e As MouseEventArgs) _
+            Handles radarPictureBox.MouseClick
+            If e.Button <> MouseButtons.Left Then Return
+
+            Dim x As Integer = Math.Max(1, Math.Min(100, CInt(e.X * 100 / Math.Max(1, radarPictureBox.ClientSize.Width))))
+            Dim y As Integer = Math.Max(1, Math.Min(100, CInt(e.Y * 100 / Math.Max(1, radarPictureBox.ClientSize.Height))))
+            ApuntadorRadar.Left = Math.Max(Shape1.Left, Shape1.Left + CInt((x - 1) * Shape1.Width / 100.0R))
+            ApuntadorRadar.Top = Math.Max(Shape1.Top, Shape1.Top + CInt((y - 1) * Shape1.Height / 100.0R))
+            POSX.Text = $"X: {x} - Y: {y}"
+            ApuntadorRadar.BringToFront()
+        End Sub
+
+        Private Sub LoadLegacyIndices()
+            If _settings Is Nothing Then Return
+
+            Try
+                Dim dataDirectory As String = Path.Combine(AppContext.BaseDirectory, "Datos")
+                LegacyDeclarations.SupDataArray = LegacyIndicesLoader.LoadSurfaces(dataDirectory)
+                LegacyDeclarations.MaxSup = CShort(Math.Min(LegacyDeclarations.SupDataArray.Length - 1, Short.MaxValue))
+
+                surfaceListBox.Items.Clear()
+                For index As Integer = 0 To LegacyDeclarations.SupDataArray.Length - 1
+                    Dim surface As SupData = LegacyDeclarations.SupDataArray(index)
+                    surfaceListBox.Items.Add(surface.Name & " - #" & index)
+                Next
+
+                LegacyDeclarations.TriggerNames = LegacyIndicesLoader.LoadTriggers(dataDirectory)
+                LegacyDeclarations.NumTriggers = CShort(Math.Min(LegacyDeclarations.TriggerNames.Length, Short.MaxValue))
+
+                triggerListBox.Items.Clear()
+                For index As Integer = 0 To LegacyDeclarations.TriggerNames.Length - 1
+                    triggerListBox.Items.Add(LegacyDeclarations.TriggerNames(index) & " - #" & index)
+                Next
+            Catch ex As Exception
+                _startupMessage &= " - índices INI no cargados: " & ex.Message
+            End Try
+
+            _loadingForm?.SetLoadingStep(2, "Cargando Cabezas...")
+            Try
+                LegacyDeclarations.NpcDataArray = LegacyIndicesLoader.LoadNpcs(_settings.DirDats)
+                npcListBox.Items.Clear()
+                hostileNpcListBox.Items.Clear()
+                For index As Integer = 1 To Math.Min(499, LegacyDeclarations.NpcDataArray.Length - 1)
+                    If Not String.IsNullOrWhiteSpace(LegacyDeclarations.NpcDataArray(index).Name) Then
+                        npcListBox.Items.Add(LegacyDeclarations.NpcDataArray(index).Name & " - #" & index)
+                    End If
+                Next
+                For index As Integer = 500 To LegacyDeclarations.NpcDataArray.Length - 1
+                    If Not String.IsNullOrWhiteSpace(LegacyDeclarations.NpcDataArray(index).Name) Then
+                        hostileNpcListBox.Items.Add(LegacyDeclarations.NpcDataArray(index).Name & " - #" & index)
+                    End If
+                Next
+                LegacyDeclarations.NumNPCs = CShort(Math.Min(499, Short.MaxValue))
+                LegacyDeclarations.NumNPCsHOST = CShort(Math.Min(Math.Max(0, LegacyDeclarations.NpcDataArray.Length - 501), Short.MaxValue))
+            Catch ex As Exception
+                _startupMessage &= " - NPCs no cargados: " & ex.Message
+            End Try
+
+            _loadingForm?.SetLoadingStep(3, "Cargando NPC's...")
+            Try
+                LegacyDeclarations.ObjDataArray = LegacyIndicesLoader.LoadObjects(_settings.DirDats)
+                LegacyDeclarations.NumOBJs = CShort(Math.Min(LegacyDeclarations.ObjDataArray.Length - 1, Short.MaxValue))
+                objectListBox.Items.Clear()
+                For index As Integer = 1 To LegacyDeclarations.NumOBJs
+                    _loadingForm?.SetLoadingStep(4, $"Cargando Datos de Objetos...{index}/{LegacyDeclarations.NumOBJs}")
+                    Application.DoEvents()
+                    objectListBox.Items.Add(LegacyDeclarations.ObjDataArray(index).Name & " - #" & index)
+                Next
+                objectAmountCombo.Text = "1"
+                _loadingForm?.SetLoadingStep(5, "Cargando Triggers...")
+            Catch ex As Exception
+                _startupMessage &= " - OBJ.dat no cargado: " & ex.Message
+            End Try
+        End Sub
+
+        Private Sub ObjectListBox_SelectedIndexChanged(sender As Object, e As EventArgs) _
+            Handles objectListBox.SelectedIndexChanged
+            If objectListBox.SelectedIndex < 0 Then Return
+            objectNumberCombo.Text = (objectListBox.SelectedIndex + 1).ToString()
+            statusLabel.Text = "Objeto seleccionado: " & objectNumberCombo.Text
+        End Sub
+
+        Private Sub NpcListBox_SelectedIndexChanged(sender As Object, e As EventArgs) _
+            Handles npcListBox.SelectedIndexChanged
+            If npcListBox.SelectedIndex >= 0 Then
+                npcNumberCombo.Text = ExtractIndex(npcListBox.SelectedItem.ToString())
+            End If
+        End Sub
+
+        Private Sub HostileNpcListBox_SelectedIndexChanged(sender As Object, e As EventArgs) _
+            Handles hostileNpcListBox.SelectedIndexChanged
+            If hostileNpcListBox.SelectedIndex >= 0 Then
+                hostileNpcNumberCombo.Text = ExtractIndex(hostileNpcListBox.SelectedItem.ToString())
+            End If
+        End Sub
+
+        Private Shared Function ExtractIndex(ByVal item As String) As String
+            Dim marker As Integer = item.LastIndexOf("#", StringComparison.Ordinal)
+            Return If(marker >= 0, item.Substring(marker + 1).Trim(), String.Empty)
+        End Function
+
+        Private Sub InsertNpcFunctionButton_Click(sender As Object, e As EventArgs) _
+            Handles insertNpcFunctionButton.Click, insertHostileNpcFunctionButton.Click
+            Dim nextMode As NpcEditMode = If(sender Is insertHostileNpcFunctionButton,
+                                             NpcEditMode.InsertHostile, NpcEditMode.InsertNormal)
+            SetNpcEditMode(If(_npcMode = nextMode, NpcEditMode.None, nextMode))
+        End Sub
+
+        Private Sub RemoveNpcFunctionButton_Click(sender As Object, e As EventArgs) _
+            Handles removeNpcFunctionButton.Click, removeHostileNpcFunctionButton.Click
+            Dim nextMode As NpcEditMode = If(sender Is removeHostileNpcFunctionButton,
+                                             NpcEditMode.RemoveHostile, NpcEditMode.RemoveNormal)
+            SetNpcEditMode(If(_npcMode = nextMode, NpcEditMode.None, nextMode))
+        End Sub
+
+        Private Sub SetNpcEditMode(ByVal mode As NpcEditMode)
+            _npcMode = mode
+            insertNpcFunctionButton.BackColor = If(mode = NpcEditMode.InsertNormal, SystemColors.Highlight, SystemColors.Control)
+            removeNpcFunctionButton.BackColor = If(mode = NpcEditMode.RemoveNormal, SystemColors.Highlight, SystemColors.Control)
+            insertHostileNpcFunctionButton.BackColor = If(mode = NpcEditMode.InsertHostile, SystemColors.Highlight, SystemColors.Control)
+            removeHostileNpcFunctionButton.BackColor = If(mode = NpcEditMode.RemoveHostile, SystemColors.Highlight, SystemColors.Control)
+        End Sub
+
+        Private Sub ApplyNpcEditMode()
+            If _npcMode = NpcEditMode.None Then Return
+            Dim changed As Boolean
+            If _npcMode = NpcEditMode.RemoveNormal OrElse _npcMode = NpcEditMode.RemoveHostile Then
+                changed = mapSurface.ClearSelectedNpc()
+            Else
+                Dim number As Integer
+                Dim text As String = If(_npcMode = NpcEditMode.InsertHostile, hostileNpcNumberCombo.Text, npcNumberCombo.Text)
+                If Not Integer.TryParse(text, number) OrElse number < 1 OrElse number >= LegacyDeclarations.NpcDataArray.Length OrElse
+                   String.IsNullOrWhiteSpace(LegacyDeclarations.NpcDataArray(number).Name) Then
+                    statusLabel.Text = "El NPC seleccionado no existe."
+                    Return
+                End If
+                changed = mapSurface.SetSelectedNpc(number)
+            End If
+            If changed Then
+                undoMenuItem.Enabled = True
+                UpdateMapStatus(If(_npcMode = NpcEditMode.RemoveNormal OrElse _npcMode = NpcEditMode.RemoveHostile,
+                                   "NPC eliminado", "NPC insertado"))
+            End If
+        End Sub
+
+        Private Sub RandomNpcFunctionButton_Click(sender As Object, e As EventArgs) _
+            Handles randomNpcFunctionButton.Click, randomHostileNpcFunctionButton.Click
+            Dim numberText As String = If(sender Is randomHostileNpcFunctionButton,
+                                          hostileNpcNumberCombo.Text, npcNumberCombo.Text)
+            Dim amountText As String = If(sender Is randomHostileNpcFunctionButton,
+                                          hostileNpcAmountCombo.Text, npcAmountCombo.Text)
+            Dim npcIndex As Integer
+            Dim amount As Integer
+            If Not Integer.TryParse(numberText, npcIndex) OrElse
+               Not Integer.TryParse(amountText, amount) OrElse amount < 1 OrElse amount > 200 Then
+                statusLabel.Text = "El NPC o la cantidad no son válidos (1 a 200)."
+                Return
+            End If
+            If npcIndex < 1 OrElse npcIndex >= LegacyDeclarations.NpcDataArray.Length OrElse
+               String.IsNullOrWhiteSpace(LegacyDeclarations.NpcDataArray(npcIndex).Name) Then
+                statusLabel.Text = "El NPC seleccionado no existe."
+                Return
+            End If
+
+            Dim placed As Integer = mapSurface.PlaceRandomNpcs(amount, npcIndex)
+            If placed > 0 Then
+                undoMenuItem.Enabled = True
+                UpdateMapStatus($"NPCs colocados al azar: {placed}")
+            Else
+                statusLabel.Text = "No se pudo colocar ningún NPC en el mapa."
+            End If
+        End Sub
+
+        Private Sub InsertTriggerButton_Click(sender As Object, e As EventArgs) Handles insertTriggerButton.Click
+            SetTriggerEditMode(If(_triggerMode = TriggerEditMode.Insert, TriggerEditMode.None, TriggerEditMode.Insert))
+        End Sub
+
+        Private Sub RemoveTriggerButton_Click(sender As Object, e As EventArgs) Handles removeTriggerButton.Click
+            SetTriggerEditMode(If(_triggerMode = TriggerEditMode.Remove, TriggerEditMode.None, TriggerEditMode.Remove))
+        End Sub
+
+        Private Sub SetTriggerEditMode(ByVal mode As TriggerEditMode)
+            _triggerMode = mode
+            insertTriggerButton.BackColor = If(mode = TriggerEditMode.Insert, SystemColors.Highlight, SystemColors.Control)
+            removeTriggerButton.BackColor = If(mode = TriggerEditMode.Remove, SystemColors.Highlight, SystemColors.Control)
+        End Sub
+
+        Private Sub ApplyTriggerEditMode()
+            If _triggerMode = TriggerEditMode.None Then Return
+            Dim changed As Boolean
+            If _triggerMode = TriggerEditMode.Remove Then
+                changed = mapSurface.ClearSelectedTrigger()
+            ElseIf triggerListBox.SelectedIndex >= 0 Then
+                changed = mapSurface.SetSelectedTrigger(triggerListBox.SelectedIndex)
+            Else
+                statusLabel.Text = "Selecciona un trigger antes de insertarlo."
+                Return
+            End If
+            If changed Then
+                undoMenuItem.Enabled = True
+                UpdateMapStatus(If(_triggerMode = TriggerEditMode.Remove, "Trigger eliminado", "Trigger insertado"))
+            End If
+        End Sub
+
+        Private Sub InsertObjectFunctionButton_Click(sender As Object, e As EventArgs) _
+            Handles insertObjectFunctionButton.Click
+            _objectInsertEnabled = Not _objectInsertEnabled
+            _objectRemoveEnabled = False
+            ApplyObjectEditMode()
+        End Sub
+
+        Private Sub RemoveObjectFunctionButton_Click(sender As Object, e As EventArgs) _
+            Handles removeObjectFunctionButton.Click
+            _objectRemoveEnabled = Not _objectRemoveEnabled
+            _objectInsertEnabled = False
+            ApplyObjectEditMode()
+        End Sub
+
+        Private Sub ApplyObjectEditMode()
+            insertObjectFunctionButton.BackColor = If(_objectInsertEnabled,
+                                                       SystemColors.Highlight, SystemColors.Control)
+            removeObjectFunctionButton.BackColor = If(_objectRemoveEnabled,
+                                                       SystemColors.Highlight, SystemColors.Control)
+            If Not _objectInsertEnabled AndAlso Not _objectRemoveEnabled Then Return
+            If mapSurface.SelectedX < 1 OrElse mapSurface.SelectedY < 1 Then
+                statusLabel.Text = "Selecciona una celda para editar el objeto."
+                Return
+            End If
+
+            Dim changed As Boolean
+            If _objectRemoveEnabled Then
+                changed = mapSurface.ClearSelectedObject()
+            Else
+                Dim objectIndex As Integer
+                Dim amount As Integer
+                If Not Integer.TryParse(objectNumberCombo.Text, objectIndex) OrElse
+                   Not Integer.TryParse(objectAmountCombo.Text, amount) Then
+                    statusLabel.Text = "Objeto o cantidad no válidos."
+                    Return
+                End If
+                If objectIndex < 1 OrElse objectIndex > LegacyDeclarations.NumOBJs Then
+                    statusLabel.Text = "El objeto seleccionado no existe en OBJ.dat."
+                    Return
+                End If
+                If amount < 1 OrElse amount > Short.MaxValue Then
+                    statusLabel.Text = "La cantidad debe estar entre 1 y 32767."
+                    Return
+                End If
+                changed = mapSurface.SetSelectedObject(objectIndex, amount)
+            End If
+
+            If changed Then
+                undoMenuItem.Enabled = True
+                UpdateMapStatus(If(_objectRemoveEnabled, "Objeto eliminado", "Objeto insertado"))
+            Else
+                statusLabel.Text = "El objeto ya tenía ese estado."
+            End If
+        End Sub
+
+        'Equivalente a lListado(0)_Click del frmMain VB6.
+        Private Sub SurfaceListBox_SelectedIndexChanged(sender As Object,
+                                                         e As EventArgs) _
+            Handles surfaceListBox.SelectedIndexChanged
+            Dim selectedIndex As Integer = surfaceListBox.SelectedIndex
+            If selectedIndex < 0 OrElse
+               selectedIndex >= LegacyDeclarations.SupDataArray.Length Then Return
+
+            Dim surface As SupData = LegacyDeclarations.SupDataArray(selectedIndex)
+            grhTextBox.Text = surface.Grh.ToString()
+
+            If surface.Capa >= 1 AndAlso surface.Capa <= 4 Then
+                layerCombo.SelectedIndex = surface.Capa - 1
+            End If
+
+            statusLabel.Text = $"Superficie {selectedIndex}: GRH {surface.Grh}"
+            If surface.Block Then
+                statusLabel.Text &= " (bloqueada)"
+            End If
+            PreviewGrh.Invalidate()
+        End Sub
+
+        Private Sub PreviewGrh_Paint(sender As Object, e As PaintEventArgs) Handles PreviewGrh.Paint
+            e.Graphics.Clear(PreviewGrh.BackColor)
+            Dim grh As Integer
+            If Not Integer.TryParse(grhTextBox.Text, grh) OrElse grh <= 0 Then Return
+
+            If Not mapSurface.DrawGraphicPreview(e.Graphics, grh,
+                                                 New Rectangle(4, 4,
+                                                               Math.Max(1, PreviewGrh.ClientSize.Width - 8),
+                                                               Math.Max(1, PreviewGrh.ClientSize.Height - 8))) Then
+                TextRenderer.DrawText(e.Graphics, "GRH no disponible", PreviewGrh.Font,
+                                      New Point(8, 8), Color.White)
+            End If
+        End Sub
+
+        Private Sub MapSurface_PreviewFrameChanged(sender As Object, e As EventArgs) _
+            Handles mapSurface.PreviewFrameChanged
+            PreviewGrh.Invalidate()
+        End Sub
+
+        Private Sub InsertTransferButton_Click(sender As Object, e As EventArgs) _
+            Handles insertTransferButton.Click
+            _insertTransferObject = False
+            _manualTransfer = False
+            SetTransferEditMode(If(_transferMode = TransferEditMode.Insert,
+                                   TransferEditMode.None,
+                                   TransferEditMode.Insert))
+        End Sub
+
+        Private Sub RemoveTransferButton_Click(sender As Object, e As EventArgs) _
+            Handles removeTransferButton.Click
+            _insertTransferObject = False
+            SetTransferEditMode(If(_transferMode = TransferEditMode.Remove,
+                                   TransferEditMode.None,
+                                   TransferEditMode.Remove))
+        End Sub
+
+        Private Sub InsertTransferObjectButton_Click(sender As Object, e As EventArgs) _
+            Handles insertTransferObjectButton.Click
+            Dim objectIndex As Integer = _settings.ObjTranslado
+            If objectIndex < 1 OrElse objectIndex > LegacyDeclarations.NumOBJs Then
+                StatTxt.Text = "El objeto de translado configurado no existe en OBJ.dat."
+                Return
+            End If
+            If LegacyDeclarations.ObjDataArray(objectIndex).ObjType <> 19 Then
+                StatTxt.Text = "El objeto configurado no es de tipo translado (19)."
+                Return
+            End If
+            _insertTransferObject = True
+            _manualTransfer = False
+            SetTransferEditMode(TransferEditMode.Insert)
+            StatTxt.Text = "Objeto de translado activado: selecciona una celda para colocarlo."
+        End Sub
+
+        Private Sub UnionManualButton_Click(sender As Object, e As EventArgs) _
+            Handles unionManualButton.Click
+            _insertTransferObject = False
+            Dim disableMode As Boolean = _transferMode = TransferEditMode.Insert AndAlso _manualTransfer
+            _manualTransfer = Not disableMode
+            SetTransferEditMode(If(disableMode, TransferEditMode.None, TransferEditMode.Insert))
+            StatTxt.Text = "Unión manual: selecciona una celda del borde para crear el translado."
+        End Sub
+
+        Private Sub UnionAutoButton_Click(sender As Object, e As EventArgs) _
+            Handles unionAutoButton.Click, insertAdjacentMenuItem.Click
+            If _document Is Nothing Then
+                StatTxt.Text = "Carga un mapa antes de unir mapas adyacentes."
+                Return
+            End If
+
+            Using dialog As New UnionAdyacenteForm(_document)
+                If dialog.ShowDialog(Me) = DialogResult.OK Then
+                    mapSurface.Invalidate()
+                    UpdateMapStatus()
+                    StatTxt.Text = "Traslados a mapas adyacentes aplicados."
+                End If
+            End Using
+        End Sub
+
+        Private Sub SetTransferEditMode(ByVal mode As TransferEditMode)
+            _transferMode = mode
+            If mode = TransferEditMode.None Then
+                _manualTransfer = False
+                _insertTransferObject = False
+            End If
+            Dim editing As Boolean = mode <> TransferEditMode.None
+            insertTransferButton.BackColor = If(mode = TransferEditMode.Insert,
+                                                SystemColors.Highlight, SystemColors.Control)
+            removeTransferButton.BackColor = If(mode = TransferEditMode.Remove,
+                                                SystemColors.Highlight, SystemColors.Control)
+            insertTransferButton.Enabled = Not (mode = TransferEditMode.Remove)
+            insertTransferObjectButton.Enabled = Not editing
+            unionManualButton.Enabled = Not (mode = TransferEditMode.Remove)
+            unionAutoButton.Enabled = Not editing
+            removeTransferButton.Enabled = Not (mode = TransferEditMode.Insert)
+            transferMapTextBox.Enabled = Not (mode = TransferEditMode.Remove)
+            transferXTextBox.Enabled = Not (mode = TransferEditMode.Remove)
+            transferYTextBox.Enabled = Not (mode = TransferEditMode.Remove)
+        End Sub
+
+        Private Sub ApplyTransferEditMode()
+            If _transferMode = TransferEditMode.None Then Return
+
+            Dim changed As Boolean
+            If _transferMode = TransferEditMode.Remove Then
+                changed = mapSurface.ClearSelectedTransfer()
+            Else
+                If _insertTransferObject Then
+                    changed = mapSurface.SetSelectedObject(_settings.ObjTranslado, 1) OrElse changed
+                End If
+                Dim mapNumber As Integer
+                Dim destinationX As Integer
+                Dim destinationY As Integer
+                If Not Integer.TryParse(transferMapTextBox.Text, mapNumber) OrElse
+                   Not Integer.TryParse(transferXTextBox.Text, destinationX) OrElse
+                   Not Integer.TryParse(transferYTextBox.Text, destinationY) Then
+                    StatTxt.Text = "Translado inválido: usa números para Mapa, X e Y."
+                    Return
+                End If
+                If _manualTransfer Then
+                    destinationX = 0
+                    destinationY = 0
+                    If mapSurface.SelectedX >= 90 Then
+                        destinationX = 12
+                        destinationY = mapSurface.SelectedY
+                    ElseIf mapSurface.SelectedX <= 11 Then
+                        destinationX = 91
+                        destinationY = mapSurface.SelectedY
+                    End If
+                    If mapSurface.SelectedY >= 91 Then
+                        destinationY = 11
+                        destinationX = mapSurface.SelectedX
+                    ElseIf mapSurface.SelectedY <= 10 Then
+                        destinationY = 90
+                        destinationX = mapSurface.SelectedX
+                    End If
+                End If
+                changed = mapSurface.SetSelectedTransfer(mapNumber, destinationX, destinationY)
+            End If
+
+            If changed Then
+                undoMenuItem.Enabled = True
+                UpdateMapStatus("Translado aplicado")
+            End If
+        End Sub
+
+        Private Sub SelectSurfaceButton_Click(sender As Object, e As EventArgs) _
+            Handles selectSurfaceButton.Click
+            SetSurfaceEditMode(If(_surfaceMode = SurfaceEditMode.Insert,
+                                  SurfaceEditMode.None,
+                                  SurfaceEditMode.Insert))
+        End Sub
+
+        Private Sub RemoveSurfaceLayerButton_Click(sender As Object, e As EventArgs) _
+            Handles removeSurfaceLayerButton.Click
+            SetSurfaceEditMode(If(_surfaceMode = SurfaceEditMode.RemoveCurrentLayer,
+                                  SurfaceEditMode.None,
+                                  SurfaceEditMode.RemoveCurrentLayer))
+        End Sub
+
+        Private Sub RemoveSurfaceAllLayersButton_Click(sender As Object, e As EventArgs) _
+            Handles removeSurfaceAllLayersButton.Click
+            SetSurfaceEditMode(If(_surfaceMode = SurfaceEditMode.RemoveLayersTwoAndThree,
+                                  SurfaceEditMode.None,
+                                  SurfaceEditMode.RemoveLayersTwoAndThree))
+        End Sub
+
+        Private Sub SetSurfaceEditMode(ByVal mode As SurfaceEditMode)
+            _surfaceMode = mode
+            Dim editing As Boolean = mode <> SurfaceEditMode.None
+            surfaceListBox.Enabled = Not editing OrElse mode = SurfaceEditMode.Insert
+            surfaceFilterCombo.Enabled = surfaceListBox.Enabled
+            grhTextBox.Enabled = surfaceListBox.Enabled
+            layerCombo.Enabled = mode <> SurfaceEditMode.RemoveLayersTwoAndThree
+            selectSurfaceButton.Enabled = mode = SurfaceEditMode.Insert OrElse Not editing
+            removeSurfaceLayerButton.Enabled = mode = SurfaceEditMode.RemoveCurrentLayer OrElse Not editing
+            removeSurfaceAllLayersButton.Enabled = mode = SurfaceEditMode.RemoveLayersTwoAndThree OrElse Not editing
+
+            selectSurfaceButton.BackColor = If(mode = SurfaceEditMode.Insert,
+                                               SystemColors.Highlight, SystemColors.Control)
+            removeSurfaceLayerButton.BackColor = If(mode = SurfaceEditMode.RemoveCurrentLayer,
+                                                     SystemColors.Highlight, SystemColors.Control)
+            removeSurfaceAllLayersButton.BackColor = If(mode = SurfaceEditMode.RemoveLayersTwoAndThree,
+                                                         SystemColors.Highlight, SystemColors.Control)
+        End Sub
+
+        Private Sub ApplySurfaceEditMode()
+            If _surfaceMode = SurfaceEditMode.None Then Return
+
+            Dim layer As Integer = layerCombo.SelectedIndex + 1
+            If layer < 1 OrElse layer > 4 Then Return
+
+            Dim changed As Boolean
+            Select Case _surfaceMode
+                Case SurfaceEditMode.Insert
+                    Dim grh As Integer
+                    If Not Integer.TryParse(grhTextBox.Text, grh) Then Return
+                    changed = mapSurface.SetSelectedGraphicWithPattern(layer, grh, _surfaceSettings)
+                Case SurfaceEditMode.RemoveCurrentLayer
+                    changed = mapSurface.ClearSelectedLayer(layer)
+                Case SurfaceEditMode.RemoveLayersTwoAndThree
+                    changed = mapSurface.ClearSelectedLayers(2, 3)
+            End Select
+
+            If changed Then
+                undoMenuItem.Enabled = True
+                UpdateMapStatus("Edición de superficie aplicada")
+            End If
         End Sub
 
         Private Sub MainForm_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
@@ -216,7 +808,14 @@ Namespace WorldEditorNet
                 Dim codec As New MapV1Codec()
                 _document = codec.Load(openMapDialog.FileName)
                 _mapPath = openMapDialog.FileName
+                _mapLoaded = True
                 mapSurface.Document = _document
+                mapSurface.EmptyMapView = False
+                MainViewShp.BackColor = Color.Black
+                MainViewShp.Visible = True
+                MainViewShp.BringToFront()
+                mapSurface.BringToFront()
+                panelStateRow.Visible = True
                 DisableBrush()
                 undoMenuItem.Enabled = False
                 UpdateMapStatus()
@@ -607,7 +1206,19 @@ Namespace WorldEditorNet
         End Sub
 
         Private Sub MapSurface_CellSelected(sender As Object, e As EventArgs) Handles mapSurface.CellSelected
+            If _settings IsNot Nothing AndAlso _settings.AutoCapturarTranslados AndAlso
+               mapSurface.SelectedX > 0 Then
+                Dim selectedCell As MapV1Cell = _document.Cells(mapSurface.SelectedX, mapSurface.SelectedY)
+                transferMapTextBox.Text = selectedCell.ExitMap.ToString()
+                transferXTextBox.Text = selectedCell.ExitX.ToString()
+                transferYTextBox.Text = selectedCell.ExitY.ToString()
+            End If
             UpdateMapStatus()
+            ApplySurfaceEditMode()
+            ApplyTransferEditMode()
+            ApplyObjectEditMode()
+            ApplyNpcEditMode()
+            ApplyTriggerEditMode()
         End Sub
 
         Private Sub MapSurface_CellEdited(sender As Object, e As EventArgs) Handles mapSurface.CellEdited
@@ -634,7 +1245,15 @@ Namespace WorldEditorNet
             Next
 
             _mapPath = String.Empty
+            _mapLoaded = False
             mapSurface.Document = _document
+            mapSurface.EmptyMapView = True
+            MainViewShp.BackColor = Color.Black
+            MainViewShp.Enabled = True
+            MainViewShp.Visible = True
+            MainViewShp.BringToFront()
+            mapSurface.BringToFront()
+            panelStateRow.Visible = False
             DisableBrush()
             undoMenuItem.Enabled = False
             mapSurface.GraphicsIndex = _graphicsIndex
@@ -680,11 +1299,17 @@ Namespace WorldEditorNet
             End If
 
             Dim cell As MapV1Cell = _document.Cells(mapSurface.SelectedX, mapSurface.SelectedY)
-            statusLabel.Text = $"X={mapSurface.SelectedX} Y={mapSurface.SelectedY} GRH={cell.Graphic1} Bloqueado={cell.Blocked} Trigger={cell.Trigger}"
+            statusLabel.Text = $"X={mapSurface.SelectedX} Y={mapSurface.SelectedY} GRH={cell.Graphic1} Bloqueado={cell.Blocked} " &
+                               $"Translado={cell.ExitMap},{cell.ExitX},{cell.ExitY} Trigger={cell.Trigger}"
         End Sub
 
         Private Sub COPIAR_GRH3_Click(sender As Object, e As EventArgs) Handles COPIAR_GRH3.Click
 
+        End Sub
+
+        'El diseñador conserva este evento del formulario original.
+        'No añade comportamiento: las acciones se gestionan en cada elemento del menú.
+        Private Sub menuStrip1_ItemClicked(sender As Object, e As ToolStripItemClickedEventArgs) Handles menuStrip1.ItemClicked
         End Sub
     End Class
 End Namespace

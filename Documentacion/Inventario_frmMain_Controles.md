@@ -33,6 +33,8 @@ El formulario VB6 contiene 227 declaraciones visuales, incluyendo elementos de m
   `ApuntadorRadar`, `POSX` y `FPS`. Las formas VB6 se representan mediante
   `Panel`, porque WinForms no tiene un control `Shape` nativo.
 - ✅ `pPaneles`: en VB6 es un `PictureBox` real de `293×293 px` (4395 twips), situado en `(8,120)` y usado como fondo/contenedor visual. En WinForms se mantiene como `PictureBox` dentro de `leftSidebar`; `functionContentPanel` permanece como control hermano superpuesto, porque el diseñador no permite usar un `PictureBox` como contenedor visual de controles.
+- ✅ El fondo de `pPaneles` está asignado desde el recurso `imagenfondo` de
+  `Properties/EditorResources.resx`; no se duplica en los paneles hijos.
 - ✅ Distribución de translados de `pPaneles`: `transferMapTextBox`, `transferXTextBox` y `transferYTextBox` ocupan las posiciones equivalentes a `tTMapa`, `tTX` y `tTY`; los botones `insertTransferButton`, `insertTransferObjectButton`, `unionManualButton`, `unionAutoButton` y `removeTransferButton` están colocados con la separación del `.frm` original.
 - ✅ Controles inferiores directos de `pPaneles`: `removeSurfaceLayerButton`, `removeSurfaceAllLayersButton` y `selectSurfaceButton` están fuera de `surfaceFunctionPanel`, como en el VB6, y conservan la distribución inferior izquierda/derecha.
 - ✅ Los grupos de funciones `Bloqueos`, `NPC`, `NPC hostil`, `Objetos` y `Triggers` usan ahora el área base de `pPaneles` (`293×293 px`). Sus listas, filtros y botones inferiores se han colocado con la conversión de las coordenadas VB6 (15 twips ≈ 1 px).
@@ -78,7 +80,10 @@ el código en tiempo de ejecución.
 
 ### Listas
 
-- ✅ `lListado(0)`: superficies → `surfaceListBox` (`Name = lListado0`)
+- ⚠️ `lListado(0)`: superficies → `surfaceListBox` (`Name = lListado0`);
+  la selección ya actualiza GRH, capa y estado de bloqueo. Los modos de
+  insertar y quitar superficie también están conectados al clic sobre el mapa;
+  aún falta el preview.
 - ✅ `lListado(1)`: NPCs → `npcListBox` (`Name = lListado1`)
 - ✅ `lListado(2)`: NPCs hostiles → `hostileNpcListBox` (`Name = lListado2`)
 - ✅ `lListado(3)`: objetos → `objectListBox` (`Name = lListado3`)
@@ -256,7 +261,7 @@ Todos estos controles deben existir físicamente en el diseñador de `MainForm` 
 - ✅ Botón `mapInfoButton`.
 - ✅ Botón `clearFunctionsButton`.
 - ✅ Barra superior `functionBarPanel`.
-- ✅ Botones diagonales `surfacePanelButton`, `transfersPanelButton`, `blockedPanelButton`, `npcsPanelButton`, `hostileNpcsPanelButton`, `objectsPanelButton` y `triggersPanelButton`.
+- ✅ Botones diagonales `surfacePanelButton`, `transfersPanelButton`, `blockedPanelButton`, `npcsPanelButton`, `hostileNpcsPanelButton`, `objectsPanelButton` y `triggersPanelButton`, actualmente solo con texto y sin imágenes asignadas.
 - ✅ Segunda fila `panelStateRow` con 13 etiquetas `MapPest` de estado.
 - ✅ Área de mapa `mapScrollPanel` y `mapSurface`.
 - ✅ Barra de estado `statusStrip1` y `statusLabel`.
@@ -292,7 +297,10 @@ Todos estos controles deben existir físicamente en el diseñador de `MainForm` 
   con el visor `radarPictureBox`.
 - ⚠️ `tileCompositionPanel` contiene los grupos visuales y las etiquetas de capas/traslado/NPC/objeto/bloqueo; faltan algunos campos originales y sus datos dinámicos.
 - ⚠️ `functionContentPanel` es la capa funcional superpuesta a `pPaneles`; contiene los siete paneles de función (`surfaceFunctionPanel`, `transferFunctionPanel`, `blockingFunctionPanel`, `npcFunctionPanel`, `hostileNpcFunctionPanel`, `objectFunctionPanel` y `triggerFunctionPanel`) y usa el tamaño base del contenedor VB6 (`293×293 px`). Falta completar el cambio de visibilidad y carga de datos equivalente a `VerFuncion`.
-- ⚠️ Los siete `LegacyPanelButton` sustituyen visualmente a `SelectPanel(0..6)`, pero todavía falta completar la lógica equivalente de `VerFuncion`.
+- ⚠️ Los siete `LegacyPanelButton` sustituyen visualmente a `SelectPanel(0..6)`;
+  sus propiedades `ButtonImage` y `BackgroundImage` están sin asignar para
+  mantener la barra superior solo con texto. Todavía falta completar la lógica
+  equivalente de `VerFuncion`.
 
 ### Colocados en el diseñador, pendientes de fidelidad funcional
 
@@ -309,14 +317,39 @@ Todos estos controles deben existir físicamente en el diseñador de `MainForm` 
 - ⚠️ `COPIAR_GRH(0..3)` y `MemoriaAuxiliar`: equivalentes visuales colocados como etiquetas.
 - ⚠️ `TimAutoGuardarMapa`: equivalente colocado como `autoSaveTimer`.
 - ⚠️ `Separacion1`, `Separacion2`, `Shape1` y `MainViewShp`: están representados mediante paneles WinForms; falta conectar el dibujo dinámico equivalente a las líneas y formas VB6.
+- ⚠️ En el VB6, `MainViewShp` es la referencia visual del área de renderizado. En
+  .NET `mapSurface` realiza actualmente el render y `mapScrollPanel` lo aloja;
+  esta diferencia estructural queda pendiente de corregir sin cambiar el
+  tamaño ni la posición del área del mapa.
 - ⚠️ `FrameComposicionTile`: contenedor y grupos visuales colocados con las
   posiciones convertidas del `.frm`; falta enlazar los datos de cada celda.
 
 ### Pendiente antes de empezar la lógica completa
 
-- ⏳ Verificar visualmente en el diseñador la posición, tamaño y orden Z de todos los paneles de función.
+- ✅ Verificación inicial realizada en el diseñador: `functionContentPanel` está
+  oculto al inicio (`Visible=False`) y `pPaneles` queda como fondo visible.
+- ✅ Orden Z revisado en el diseñador: `functionContentPanel` queda por encima
+  de `pPaneles` para que sus controles se vean al activarlo; no se modificaron
+  tamaños ni posiciones de los botones ajustados por el usuario.
 - ✅ Mantener `pPaneles` como fondo `PictureBox` y `functionContentPanel` como capa hermana superpuesta; WinForms no permite reproducir mediante el diseñador la relación de contenedor del `PictureBox` VB6.
+- ✅ Al iniciar, `functionContentPanel` y sus paneles hijos permanecen ocultos,
+  por lo que se muestra únicamente el fondo de `pPaneles`; se muestran al
+  seleccionar un panel superior.
 - ⏳ Implementar después la matriz de visibilidad de `modPaneles.bas` (`VerFuncion`) sin crear controles desde `MainForm.vb`.
+
+### Conexión funcional iniciada — Preview y Translados
+
+- ✅ `PreviewGrh`: conectado al índice gráfico y al BMP seleccionado; se
+  actualiza al cambiar la superficie de `surfaceListBox`.
+- ✅ `insertTransferButton` (`cInsertarTrans`): modo de inserción de
+  `ExitMap`, `ExitX` y `ExitY` al seleccionar una celda.
+- ✅ `removeTransferButton` (`cQuitarTrans`): elimina el translado de la celda.
+- ✅ `unionManualButton` (`cUnionManual`): aplica la lógica de coordenadas de
+  borde del código VB6.
+- ⚠️ `insertTransferObjectButton` (`cInsertarTransOBJ`): pendiente hasta
+  migrar los datos OBJ y `Cfg_TrOBJ`.
+- ⚠️ `unionAutoButton` (`cUnionAuto`): pendiente hasta migrar
+  `frmUnionAdyacente`.
 
 ### Resultado de la auditoría del inventario
 
@@ -325,3 +358,117 @@ Todos estos controles deben existir físicamente en el diseñador de `MainForm` 
   tienen una indexación común equivalente.
 - ⚠️ La lógica de visibilidad y actualización de datos todavía no está
   conectada al comportamiento de `VerFuncion`.
+
+### Verificación 03/11/2026
+
+- ✅ Corregida la referencia heredada del diseñador a
+  `menuStrip1_ItemClicked`; el formulario vuelve a abrirse en modo Diseño.
+- ✅ Orden Z comprobado mediante el diseñador: `pPaneles` queda detrás y
+  `functionContentPanel` delante.
+- ✅ `rightContentPanel` deja de ocupar toda la ventana por debajo del panel
+  lateral: se mantiene en `Location=(320,24)` y `Size=(975,789)` para que la
+  barra de funciones y el área principal respeten la distribución visual del
+  VB6.
+- ✅ Prueba de ejecución: el editor inicia sin ningún modo de función
+  seleccionado, muestra `pPaneles` con su imagen de fondo y mantiene oculto
+  `functionContentPanel`, igual que el arranque del VB6.
+- ✅ Prueba funcional inicial: `Superficie` y `Translados` muestran sus
+  respectivos controles y ocultan los demás grupos; `F4` ejecuta la limpieza
+  y devuelve la vista a `pPaneles`.
+- ✅ Compilación Debug: 0 advertencias y 0 errores.
+
+### Issue #1 — Auditoría de tamaños y posiciones
+
+#### Coincidencias verificadas
+
+- ✅ `radarPanel` equivalente a `picRadar`: `107x106` píxeles.
+- ✅ `mapInfoPanel` equivalente a `Frame1`: `189x82` píxeles.
+- ✅ `pPaneles`: `293x293` píxeles.
+- ✅ `StatTxt`: `290x285` píxeles en el estado inicial.
+- ✅ Área equivalente a `MainViewShp`: `892x567` píxeles.
+
+#### Diferencias pendientes
+
+- ✅ El formulario inicia maximizado (`WindowState=Maximized`) y conserva
+  `MaximizeBox=False`, conforme al VB6.
+- ✅ El título del formulario es `Aomania WE V1.0 Build 0` y
+  `KeyPreview=True` quedó guardado mediante el diseñador.
+- ✅ `BackColor` del formulario quedó establecido desde la ventana Propiedades
+  a `Color.FromArgb(224,224,224)`, equivalente a `&H00E0E0E0&` del VB6.
+- ✅ Issue #1 cerrado: la posición final se verificó y guardó desde el
+  diseñador. `rightContentPanel=(308,24)`, `mapScrollPanel=(0,82)` con
+  `Padding=0`, y `mapSurface`/`MainViewShp=(0,0)` dentro del área de mapa.
+  Ambos mantienen `892x567`.
+- ⚠️ Queda pendiente la equivalencia funcional del render: decidir y conectar
+  correctamente el control que dibuja el mapa (`MainViewShp`) y el control
+  auxiliar `mapSurface`, además de validar el orden Z durante la ejecución.
+  Esta tarea corresponde al issue #2 y no forma parte del cierre visual del
+  issue #1.
+- ⚠️ La relación entre `MainViewShp` y `mapSurface` queda separada en la
+  issue #2; no se debe cerrar esta diferencia mezclándola con la funcionalidad.
+
+### Issue #2 — Estado de la validación del render
+
+- ✅ `mapSurface` es el renderer actual y recibe `GraphicsIndex` y
+  `GraphicsDirectory` desde `MainForm`.
+- ✅ El proyecto copia al resultado de compilación `Datos/WorldEditor.ini`,
+  `INIT/Graficos.ind`, `MIDI` y `Maps`, evitando que la configuración dependa
+  de carpetas ausentes en `bin/Debug`.
+- ✅ Build Debug: 0 advertencias y 0 errores.
+- ⚠️ El mapa nuevo muestra la cuadrícula y valores iniciales; para validar el
+  dibujo de texturas hay que abrir un `.map` real, por ejemplo `Mapa1.map`.
+- ⏳ Pendiente: comparar el dibujo de un mapa real con VB6 y decidir la
+  equivalencia funcional final de `MainViewShp` frente a `mapSurface`, sin
+  alterar las posiciones ya ajustadas en el diseñador.
+- ✅ `Maps/*` también se copia al resultado de compilación para disponer de
+  mapas de prueba junto con `INIT` y `MIDI`.
+- ✅ Las carpetas usadas por la salida son las locales del proyecto:
+  `WorldEditorNet/INIT`, `WorldEditorNet/MIDI` y `WorldEditorNet/Maps`.
+- ✅ La ejecución limpia recompilada conserva la separación entre el lateral,
+  la barra superior, la fila `MapPest` y el área de mapa; si se observa el
+  solapamiento anterior, hay que cerrar la instancia antigua y ejecutar el
+  binario de `bin/Debug` recién generado.
+
+### Preview de GRH y translados
+
+- ✅ `PreviewGrh` muestra el GRH seleccionado y reproduce sus animaciones.
+- ✅ Los controles de translado escriben, editan y eliminan `ExitMap`, `ExitX`
+  y `ExitY` de la celda seleccionada.
+- ✅ `objectListBox` se alimenta desde `DATS/OBJ.dat`, respetando el índice de
+  objetos del VB6.
+- ✅ `insertTransferObjectButton` coloca el objeto configurado en
+  `CONFIGURACION/ObjTranslado` cuando su tipo es 19, junto al translado.
+- ⚠️ `unionAutoButton` sigue pendiente: el comportamiento original depende de
+  la ventana `frmUnionAdyacente`, todavía no migrada.
+
+### Lógica pendiente de `frmUnionAdyacente`
+
+- ✅ La lógica de aplicación está separada en `Core/AdjacentTransferService.vb`.
+- ⏳ Falta el formulario WinForms creado desde el diseñador con los controles
+  `Mapa(0..3)`, `Aplicar(0..3)`, `PosLim(0..7)`, `cmdAplicar`,
+  `cmdCancelar` y `cmdDefault`, además de sus menús de límites.
+
+### Edición de objetos
+
+- ✅ `objectListBox` selecciona objetos cargados desde `DATS/OBJ.dat`.
+- ✅ `insertObjectFunctionButton` inserta `ObjIndex` y `ObjAmount` en la celda
+  seleccionada.
+- ✅ `removeObjectFunctionButton` elimina el objeto de la celda seleccionada.
+## Estado funcional añadido
+
+- `npcListBox` y `hostileNpcListBox`: cargan los NPC desde `NPCs.dat` y
+  `NPCs-HOSTILES.dat`.
+- `insertNpcFunctionButton` / `removeNpcFunctionButton`: insertan o eliminan
+  el NPC seleccionado en la celda del mapa.
+- `insertHostileNpcFunctionButton` / `removeHostileNpcFunctionButton`: mismo
+  comportamiento para NPC hostiles.
+- `insertTriggerButton` / `removeTriggerButton`: insertan o eliminan el
+  trigger seleccionado.
+- `randomNpcFunctionButton` y `randomHostileNpcFunctionButton`: colocan hasta
+  200 NPCs en celdas no bloqueadas, equivalente a `PonerAlAzar`.
+
+## Pendiente de diseñador
+
+- Falta el formulario equivalente a `frmUnionAdyacente`. No se ha sustituido
+  por una ventana creada desde código. La lógica de los cuatro bordes ya está
+  en `Core/AdjacentTransferService.vb` y espera esos controles visuales.

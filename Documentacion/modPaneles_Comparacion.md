@@ -57,5 +57,7 @@ distribución de `MainForm` también incluye ya el lateral de información y el
 de los siete botones cambian la selección y el mensaje de estado; no se han
 inventado controles funcionales que todavía no estén migrados. La barra
 superior de `MainForm` ya contiene los siete controles equivalentes.
-La imagen de cada botón queda pendiente de extraerse de `frmMain.frx` para
-conservar los recursos originales.
+La imagen de cada botón de la barra superior queda pendiente de extraerse de
+`frmMain.frx` para conservar los recursos originales. El fondo de `pPaneles`
+ya está integrado como `imagenfondo`; al iniciar no se activa ningún panel de
+funciones y la capa funcional se muestra únicamente al seleccionar F5–F12.

@@ -86,7 +86,9 @@ paridad visual con DirectDraw.
 - Si las rutas del índice o los BMP no existen, se muestran índices GRH como
   respaldo y se informa del problema en la barra de estado.
 - Los NPC, objetos, translados y triggers todavía no usan sus sprites originales;
-  solo tienen representación textual de diagnóstico. El radar sigue pendiente.
+  solo tienen representación textual de diagnóstico. El radar ya tiene su
+  estructura visual y controles equivalentes; queda pendiente conectar su
+  actualización dinámica completa.
 - Solo está migrada la edición básica explícita del bloqueo de la celda
   seleccionada y la asignación manual de GRH a las cuatro capas. Todavía
   faltan mosaicos, autocompletado, borrado de capas, NPC, objetos,

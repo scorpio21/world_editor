@@ -99,6 +99,40 @@ Module Program
             AssertEqual(100, pattern.GetGraphicIndex(100, 1, 1), "GRH con desplazamiento")
             pattern.Mosaic = False
             AssertEqual(100, pattern.GetGraphicIndex(100, 17, 23), "GRH sin mosaico")
+
+            Dim adjacent As New AdjacentTransferOptions()
+            AdjacentTransferService.UseBasicLimits(adjacent)
+            adjacent.NorthMap = 20
+            adjacent.ApplyNorth = True
+            AssertEqual(True, AdjacentTransferService.Apply(source, adjacent), "unión norte aplicada")
+            AssertEqual(CShort(20), source.Cells(12, 10).ExitMap, "mapa norte")
+            AssertEqual(CShort(12), source.Cells(12, 10).ExitX, "X norte")
+            AssertEqual(CShort(90), source.Cells(12, 10).ExitY, "Y norte")
+
+            Dim allSides As New AdjacentTransferOptions With {
+                .NorthMap = 21,
+                .EastMap = 22,
+                .SouthMap = 23,
+                .WestMap = 24,
+                .ApplyNorth = True,
+                .ApplyEast = True,
+                .ApplySouth = True,
+                .ApplyWest = True}
+            AssertEqual(True, AdjacentTransferService.Apply(source, allSides), "unión completa aplicada")
+            AssertEqual(CShort(22), source.Cells(90, 20).ExitMap, "mapa este")
+            AssertEqual(CShort(12), source.Cells(90, 20).ExitX, "X este")
+            AssertEqual(CShort(20), source.Cells(90, 20).ExitY, "Y este")
+
+            Dim blocked As MapV1Cell = source.Cells(13, 10)
+            blocked.Blocked = 1
+            blocked.ExitMap = 99
+            source.Cells(13, 10) = blocked
+            Dim clearNorth As New AdjacentTransferOptions With {
+                .ApplyNorth = True,
+                .NorthMap = 0}
+            AssertEqual(True, AdjacentTransferService.Apply(source, clearNorth), "limpieza norte")
+            AssertEqual(CShort(99), source.Cells(13, 10).ExitMap, "borde bloqueado preservado")
+
             Console.WriteLine("MapV1Codec smoke test: OK")
         Finally
             If Directory.Exists(root) Then Directory.Delete(root, recursive:=True)

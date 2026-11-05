@@ -37,6 +37,12 @@ Namespace WorldEditorNet
         Private ReadOnly _bitmapCache As New Dictionary(Of Integer, Bitmap)()
         Private ReadOnly _animationStates As New Dictionary(Of Integer, AnimationState)()
         Private ReadOnly _animationTimer As New Timer With {.Interval = 16}
+        Private _previewGrhIndex As Integer
+        Private _previewFrameNumber As Integer = 1
+        Private _previewSpeedCounter As Integer
+        Private _emptyMapView As Boolean = True
+        Private _cursorX As Integer
+        Private _cursorY As Integer
 
         Private NotInheritable Class AnimationState
             Public Property GrhIndex As Integer
@@ -46,6 +52,18 @@ Namespace WorldEditorNet
 
         Public Event CellSelected As EventHandler
         Public Event CellEdited As EventHandler
+        Public Event PreviewFrameChanged As EventHandler
+        Public Event FrameRendered As EventHandler
+
+        Public Property EmptyMapView As Boolean
+            Get
+                Return _emptyMapView
+            End Get
+            Set(value As Boolean)
+                _emptyMapView = value
+                Invalidate()
+            End Set
+        End Property
 
         Public Property BrushEnabled As Boolean
             Get
@@ -132,6 +150,192 @@ Namespace WorldEditorNet
             Return True
         End Function
 
+        ''' <summary>Escribe el translado de la celda seleccionada.</summary>
+        Public Function SetSelectedTransfer(ByVal mapNumber As Integer,
+                                             ByVal destinationX As Integer,
+                                             ByVal destinationY As Integer) As Boolean
+            If _document Is Nothing OrElse _selectedX < 1 OrElse _selectedY < 1 Then Return False
+            If mapNumber < 0 OrElse mapNumber > 9000 Then Return False
+            If destinationX < 0 OrElse destinationX > 100 OrElse
+               destinationY < 0 OrElse destinationY > 100 Then Return False
+
+            Dim cell As MapV1Cell = _document.Cells(_selectedX, _selectedY)
+            If cell.ExitMap = mapNumber AndAlso cell.ExitX = destinationX AndAlso
+               cell.ExitY = destinationY Then Return False
+
+            BeginUndo(cell)
+            cell.ExitMap = CShort(mapNumber)
+            cell.ExitX = CShort(destinationX)
+            cell.ExitY = CShort(destinationY)
+            _document.Cells(_selectedX, _selectedY) = cell
+            _document.Changed = True
+            Invalidate()
+            RaiseEvent CellEdited(Me, EventArgs.Empty)
+            Return True
+        End Function
+
+        ''' <summary>Quita el translado de la celda seleccionada.</summary>
+        Public Function ClearSelectedTransfer() As Boolean
+            If _document Is Nothing OrElse _selectedX < 1 OrElse _selectedY < 1 Then Return False
+
+            Dim cell As MapV1Cell = _document.Cells(_selectedX, _selectedY)
+            If cell.ExitMap = 0 AndAlso cell.ExitX = 0 AndAlso cell.ExitY = 0 Then Return False
+
+            BeginUndo(cell)
+            cell.ExitMap = 0
+            cell.ExitX = 0
+            cell.ExitY = 0
+            _document.Cells(_selectedX, _selectedY) = cell
+            _document.Changed = True
+            Invalidate()
+            RaiseEvent CellEdited(Me, EventArgs.Empty)
+            Return True
+        End Function
+
+        Public Function SetSelectedObject(ByVal objectIndex As Integer,
+                                          ByVal amount As Integer) As Boolean
+            If _document Is Nothing OrElse SelectedX < 1 OrElse SelectedY < 1 Then Return False
+            If objectIndex < 1 OrElse objectIndex > Short.MaxValue Then Return False
+            If amount < 1 OrElse amount > Short.MaxValue Then Return False
+
+            Dim cell As MapV1Cell = _document.Cells(SelectedX, SelectedY)
+            If cell.ObjIndex = objectIndex AndAlso cell.ObjAmount = amount Then Return False
+            cell.ObjIndex = CShort(objectIndex)
+            cell.ObjAmount = CShort(amount)
+            _document.Cells(SelectedX, SelectedY) = cell
+            _document.Changed = True
+            Invalidate()
+            RaiseEvent CellEdited(Me, EventArgs.Empty)
+            Return True
+        End Function
+
+        Public Function ClearSelectedObject() As Boolean
+            If _document Is Nothing OrElse SelectedX < 1 OrElse SelectedY < 1 Then Return False
+
+            Dim cell As MapV1Cell = _document.Cells(SelectedX, SelectedY)
+            If cell.ObjIndex = 0 AndAlso cell.ObjAmount = 0 Then Return False
+            BeginUndo(cell)
+            cell.ObjIndex = 0
+            cell.ObjAmount = 0
+            _document.Cells(SelectedX, SelectedY) = cell
+            _document.Changed = True
+            Invalidate()
+            RaiseEvent CellEdited(Me, EventArgs.Empty)
+            Return True
+        End Function
+
+        Public Function SetSelectedNpc(ByVal npcIndex As Integer) As Boolean
+            If _document Is Nothing OrElse SelectedX < 1 OrElse SelectedY < 1 Then Return False
+            If npcIndex < 1 OrElse npcIndex > Short.MaxValue Then Return False
+
+            Dim cell As MapV1Cell = _document.Cells(SelectedX, SelectedY)
+            If cell.NpcIndex = npcIndex Then Return False
+            BeginUndo(cell)
+            cell.NpcIndex = CShort(npcIndex)
+            _document.Cells(SelectedX, SelectedY) = cell
+            _document.Changed = True
+            Invalidate()
+            RaiseEvent CellEdited(Me, EventArgs.Empty)
+            Return True
+        End Function
+
+        Public Function ClearSelectedNpc() As Boolean
+            If _document Is Nothing OrElse SelectedX < 1 OrElse SelectedY < 1 Then Return False
+
+            Dim cell As MapV1Cell = _document.Cells(SelectedX, SelectedY)
+            If cell.NpcIndex = 0 Then Return False
+            BeginUndo(cell)
+            cell.NpcIndex = 0
+            _document.Cells(SelectedX, SelectedY) = cell
+            _document.Changed = True
+            Invalidate()
+            RaiseEvent CellEdited(Me, EventArgs.Empty)
+            Return True
+        End Function
+
+        Public Function PlaceRandomNpcs(ByVal count As Integer, ByVal npcIndex As Integer) As Integer
+            If _document Is Nothing OrElse count < 1 OrElse npcIndex < 1 Then Return 0
+
+            Dim random As New Random()
+            Dim placed As Integer = 0
+            Dim attempts As Integer = 0
+            Dim maxAttempts As Integer = Math.Max(100, count * 100)
+            While placed < count AndAlso attempts < maxAttempts
+                attempts += 1
+                Dim x As Integer = random.Next(XMinMapSize, XMaxMapSize)
+                Dim y As Integer = random.Next(YMinMapSize, YMaxMapSize)
+                Dim cell As MapV1Cell = _document.Cells(x, y)
+                If cell.Blocked <> 0 Then Continue While
+
+                BeginUndo(cell)
+                cell.NpcIndex = CShort(Math.Min(npcIndex, Short.MaxValue))
+                _document.Cells(x, y) = cell
+                placed += 1
+            End While
+
+            If placed > 0 Then
+                _document.Changed = True
+                Invalidate()
+                RaiseEvent CellEdited(Me, EventArgs.Empty)
+            End If
+            Return placed
+        End Function
+
+        Public Function SetSelectedTrigger(ByVal triggerIndex As Integer) As Boolean
+            If _document Is Nothing OrElse SelectedX < 1 OrElse SelectedY < 1 Then Return False
+            If triggerIndex < 0 OrElse triggerIndex > Short.MaxValue Then Return False
+
+            Dim cell As MapV1Cell = _document.Cells(SelectedX, SelectedY)
+            If cell.Trigger = triggerIndex Then Return False
+            BeginUndo(cell)
+            cell.Trigger = CShort(triggerIndex)
+            _document.Cells(SelectedX, SelectedY) = cell
+            _document.Changed = True
+            Invalidate()
+            RaiseEvent CellEdited(Me, EventArgs.Empty)
+            Return True
+        End Function
+
+        Public Function ClearSelectedTrigger() As Boolean
+            Return SetSelectedTrigger(0)
+        End Function
+
+        ''' <summary>Dibuja el frame actual del GRH en un visor externo.</summary>
+        Public Function DrawGraphicPreview(ByVal graphics As Graphics,
+                                           ByVal grhIndex As Integer,
+                                           ByVal destination As Rectangle) As Boolean
+            If graphics Is Nothing OrElse destination.Width <= 0 OrElse destination.Height <= 0 OrElse
+               _graphicsIndex Is Nothing OrElse String.IsNullOrWhiteSpace(_graphicsDirectory) Then Return False
+
+            Dim parent As GrhIndexRecord = Nothing
+            If Not _graphicsIndex.Records.TryGetValue(grhIndex, parent) OrElse parent Is Nothing Then Return False
+            If _previewGrhIndex <> grhIndex Then
+                _previewGrhIndex = grhIndex
+                _previewFrameNumber = 1
+                _previewSpeedCounter = 0
+            End If
+
+            Dim record As GrhIndexRecord = Nothing
+            If Not _graphicsIndex.TryGetFrame(grhIndex, _previewFrameNumber, record) OrElse record Is Nothing Then Return False
+            If record.FileNumber <= 0 OrElse record.Width <= 0 OrElse record.Height <= 0 Then Return False
+
+            Dim bitmap As Bitmap = GetBitmap(record.FileNumber)
+            If bitmap Is Nothing OrElse record.X < 0 OrElse record.Y < 0 OrElse
+               record.X + record.Width > bitmap.Width OrElse record.Y + record.Height > bitmap.Height Then Return False
+
+            Dim scale As Double = Math.Min(destination.Width / CDbl(record.Width),
+                                           destination.Height / CDbl(record.Height))
+            Dim drawWidth As Integer = Math.Max(1, CInt(record.Width * scale))
+            Dim drawHeight As Integer = Math.Max(1, CInt(record.Height * scale))
+            Dim left As Integer = destination.Left + (destination.Width - drawWidth) \ 2
+            Dim top As Integer = destination.Top + (destination.Height - drawHeight) \ 2
+            graphics.DrawImage(bitmap,
+                               New Rectangle(left, top, drawWidth, drawHeight),
+                               New Rectangle(record.X, record.Y, record.Width, record.Height),
+                               GraphicsUnit.Pixel)
+            Return True
+        End Function
+
         Public Function SetSelectedGraphicWithPattern(ByVal layer As Integer,
                                                        ByVal baseGrh As Integer,
                                                        ByVal settings As SurfacePatternSettings) As Boolean
@@ -163,6 +367,48 @@ Namespace WorldEditorNet
                 RaiseEvent CellEdited(Me, EventArgs.Empty)
             End If
             Return changed
+        End Function
+
+        Public Function ClearSelectedLayer(ByVal layer As Integer) As Boolean
+            If _document Is Nothing OrElse _selectedX < 1 OrElse _selectedY < 1 Then Return False
+            If layer < 1 OrElse layer > 4 Then Return False
+
+            Dim cell As MapV1Cell = _document.Cells(_selectedX, _selectedY)
+            Dim replacement As Short = If(layer = 1, CShort(1), CShort(0))
+            If GetGraphic(cell, layer) = replacement Then Return False
+
+            BeginUndo(cell)
+            SetGraphic(cell, layer, replacement)
+            _document.Cells(_selectedX, _selectedY) = cell
+            _document.Changed = True
+            Invalidate()
+            RaiseEvent CellEdited(Me, EventArgs.Empty)
+            Return True
+        End Function
+
+        Public Function ClearSelectedLayers(ByVal firstLayer As Integer,
+                                            ByVal lastLayer As Integer) As Boolean
+            If firstLayer > lastLayer Then Return False
+            If _document Is Nothing OrElse _selectedX < 1 OrElse _selectedY < 1 Then Return False
+
+            Dim cell As MapV1Cell = _document.Cells(_selectedX, _selectedY)
+            Dim changed As Boolean = False
+            For layer As Integer = firstLayer To lastLayer
+                If layer < 1 OrElse layer > 4 Then Continue For
+                Dim replacement As Short = If(layer = 1, CShort(1), CShort(0))
+                If GetGraphic(cell, layer) <> replacement Then
+                    If Not changed Then BeginUndo(cell)
+                    SetGraphic(cell, layer, replacement)
+                    changed = True
+                End If
+            Next
+
+            If Not changed Then Return False
+            _document.Cells(_selectedX, _selectedY) = cell
+            _document.Changed = True
+            Invalidate()
+            RaiseEvent CellEdited(Me, EventArgs.Empty)
+            Return True
         End Function
 
         Public Function SetAllBlocked(ByVal blocked As Boolean) As Boolean
@@ -396,6 +642,9 @@ Namespace WorldEditorNet
             End Get
             Set(value As GraficosIndReader)
                 _graphicsIndex = value
+                _previewGrhIndex = 0
+                _previewFrameNumber = 1
+                _previewSpeedCounter = 0
                 Invalidate()
             End Set
         End Property
@@ -430,6 +679,13 @@ Namespace WorldEditorNet
 
         Protected Overrides Sub OnPaint(e As PaintEventArgs)
             MyBase.OnPaint(e)
+            e.Graphics.Clear(Color.Black)
+            If _emptyMapView Then
+                DrawCursorCoordinates(e.Graphics)
+                RaiseEvent FrameRendered(Me, EventArgs.Empty)
+                Return
+            End If
+
             Using gridPen As New Pen(Color.LightGray)
                 Using blockedBrush As New SolidBrush(Color.FromArgb(150, Color.IndianRed))
                     Using selectedBrush As New SolidBrush(Color.FromArgb(120, Color.Gold))
@@ -470,6 +726,14 @@ Namespace WorldEditorNet
                     End Using
                 End Using
             End Using
+            DrawCursorCoordinates(e.Graphics)
+            RaiseEvent FrameRendered(Me, EventArgs.Empty)
+        End Sub
+
+        Private Sub DrawCursorCoordinates(graphics As Graphics)
+            If _cursorX < 1 OrElse _cursorY < 1 Then Return
+            TextRenderer.DrawText(graphics, $"X= {_cursorX} ; Y= {_cursorY}", Font,
+                                  New Point(4, 4), Color.Red, TextFormatFlags.NoPadding)
         End Sub
 
         Private Sub DrawMetadataMarkers(graphics As Graphics, cell As MapV1Cell,
@@ -529,18 +793,34 @@ Namespace WorldEditorNet
         End Function
 
         Private Sub AnimationTimer_Tick(sender As Object, e As EventArgs)
-            If _graphicsIndex Is Nothing Then Return
-            For Each state As AnimationState In _animationStates.Values
-                Dim parent As GrhIndexRecord = Nothing
-                If Not _graphicsIndex.Records.TryGetValue(state.GrhIndex, parent) OrElse Not parent.IsAnimation Then Continue For
-                If state.SpeedCounter > 0 Then
-                    state.SpeedCounter -= 1
-                Else
-                    state.SpeedCounter = Math.Max(1, parent.Speed)
-                    state.FrameNumber += 1
-                    If state.FrameNumber > parent.Frames.Count Then state.FrameNumber = 1
+            If _graphicsIndex IsNot Nothing Then
+                For Each state As AnimationState In _animationStates.Values
+                    Dim parent As GrhIndexRecord = Nothing
+                    If Not _graphicsIndex.Records.TryGetValue(state.GrhIndex, parent) OrElse Not parent.IsAnimation Then Continue For
+                    If state.SpeedCounter > 0 Then
+                        state.SpeedCounter -= 1
+                    Else
+                        state.SpeedCounter = Math.Max(1, parent.Speed)
+                        state.FrameNumber += 1
+                        If state.FrameNumber > parent.Frames.Count Then state.FrameNumber = 1
+                    End If
+                Next
+
+                Dim preview As GrhIndexRecord = Nothing
+                If _previewGrhIndex > 0 AndAlso
+                   _graphicsIndex.Records.TryGetValue(_previewGrhIndex, preview) AndAlso
+                   preview IsNot Nothing AndAlso preview.IsAnimation Then
+                    If _previewSpeedCounter > 0 Then
+                        _previewSpeedCounter -= 1
+                    Else
+                        _previewSpeedCounter = Math.Max(1, preview.Speed)
+                        _previewFrameNumber += 1
+                        If _previewFrameNumber > preview.Frames.Count Then _previewFrameNumber = 1
+                        RaiseEvent PreviewFrameChanged(Me, EventArgs.Empty)
+                    End If
                 End If
-            Next
+            End If
+
             Invalidate()
         End Sub
 
@@ -594,6 +874,7 @@ Namespace WorldEditorNet
 
         Protected Overrides Sub OnMouseMove(e As MouseEventArgs)
             MyBase.OnMouseMove(e)
+            UpdateCursorCell(e.X, e.Y)
             If _brushEnabled AndAlso e.Button = MouseButtons.Left Then
                 SelectCellAt(e.X, e.Y, paint:=True)
             End If
@@ -602,6 +883,19 @@ Namespace WorldEditorNet
         Protected Overrides Sub OnMouseUp(e As MouseEventArgs)
             MyBase.OnMouseUp(e)
             If e.Button = MouseButtons.Left Then Capture = False
+        End Sub
+
+        Private Sub UpdateCursorCell(pixelX As Integer, pixelY As Integer)
+            Dim x As Integer = (pixelX \ _cellSize) + 1
+            Dim y As Integer = (pixelY \ _cellSize) + 1
+            If x < 1 OrElse x > 100 OrElse y < 1 OrElse y > 100 Then
+                _cursorX = 0
+                _cursorY = 0
+            Else
+                _cursorX = x
+                _cursorY = y
+            End If
+            Invalidate()
         End Sub
 
         Private Sub SelectCellAt(ByVal pixelX As Integer,

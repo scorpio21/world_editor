@@ -149,9 +149,15 @@ Namespace WorldEditorNet
                 Dim content = If(String.IsNullOrEmpty(Text), Name, Text).Replace(" (", Environment.NewLine & "(")
                 Dim textBounds = bounds
                 If ButtonImage IsNot Nothing Then
-                    Dim imageRect = New Rectangle(bounds.Left + 6, bounds.Top + (bounds.Height - 24) \ 2, 24, 24)
+                    Dim imageRect = New Rectangle(bounds.Left + (bounds.Width - 24) \ 2,
+                                                  bounds.Bottom - 27,
+                                                  24,
+                                                  24)
                     e.Graphics.DrawImage(ButtonImage, imageRect)
-                    textBounds = New Rectangle(imageRect.Right + 3, bounds.Top, bounds.Width - imageRect.Right + bounds.Left - 3, bounds.Height)
+                    textBounds = New Rectangle(bounds.Left,
+                                               bounds.Top,
+                                               bounds.Width,
+                                               Math.Max(1, imageRect.Top - bounds.Top - 2))
                 End If
                 Using format As New StringFormat With {.Alignment = StringAlignment.Center, .LineAlignment = StringAlignment.Center}
                     Using textBrush As New SolidBrush(ForeColor)
