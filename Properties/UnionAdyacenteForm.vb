@@ -18,6 +18,8 @@ Partial Public Class UnionAdyacenteForm
     Private Sub UnionAdyacenteForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         If _document Is Nothing Then Return
 
+        'Equivalente a Form_Load -> mnuBasica_Click -> LeerMapaExit del VB6.
+        ApplyBasicLimitsToControls()
         Dim options = CreateOptionsFromControls()
         Dim maps = AdjacentTransferService.ReadExistingMaps(_document, options)
         Mapa0TextBox.Text = maps(0).ToString(CultureInfo.InvariantCulture)
@@ -28,9 +30,26 @@ Partial Public Class UnionAdyacenteForm
         Aplicar1CheckBox.Checked = False
         Aplicar2CheckBox.Checked = False
         Aplicar3CheckBox.Checked = False
+        UpdateApplyButtonState()
     End Sub
 
     Private Sub cmdDefault_Click(sender As Object, e As EventArgs) Handles cmdDefault.Click
+        ApplyBasicLimitsToControls()
+        If _document IsNot Nothing Then
+            Dim maps = AdjacentTransferService.ReadExistingMaps(_document, CreateOptionsFromControls())
+            Mapa0TextBox.Text = maps(0).ToString(CultureInfo.InvariantCulture)
+            Mapa1TextBox.Text = maps(1).ToString(CultureInfo.InvariantCulture)
+            Mapa2TextBox.Text = maps(2).ToString(CultureInfo.InvariantCulture)
+            Mapa3TextBox.Text = maps(3).ToString(CultureInfo.InvariantCulture)
+        End If
+        Aplicar0CheckBox.Checked = False
+        Aplicar1CheckBox.Checked = False
+        Aplicar2CheckBox.Checked = False
+        Aplicar3CheckBox.Checked = False
+        UpdateApplyButtonState()
+    End Sub
+
+    Private Sub ApplyBasicLimitsToControls()
         PosLim_0.Text = "91"
         PosLim_1.Text = "10"
         PosLim_2.Text = "90"
@@ -39,6 +58,19 @@ Partial Public Class UnionAdyacenteForm
         PosLim_5.Text = "11"
         PosLim_6.Text = "12"
         PosLim_7.Text = "89"
+    End Sub
+
+    Private Sub ApplyCheckBox_CheckedChanged(sender As Object, e As EventArgs) _
+        Handles Aplicar0CheckBox.CheckedChanged, Aplicar1CheckBox.CheckedChanged,
+                Aplicar2CheckBox.CheckedChanged, Aplicar3CheckBox.CheckedChanged
+        UpdateApplyButtonState()
+    End Sub
+
+    Private Sub UpdateApplyButtonState()
+        cmdAplicar.Enabled = Aplicar0CheckBox.Checked OrElse
+                             Aplicar1CheckBox.Checked OrElse
+                             Aplicar2CheckBox.Checked OrElse
+                             Aplicar3CheckBox.Checked
     End Sub
 
     Private Sub cmdCancelar_Click(sender As Object, e As EventArgs) Handles cmdCancelar.Click
@@ -92,16 +124,16 @@ Partial Public Class UnionAdyacenteForm
 
     Private Shared Function ReadMap(control As TextBox) As Integer
         Dim value As Integer
-        If Not Integer.TryParse(control.Text.Trim(), value) OrElse value < 0 Then
-            Throw New ArgumentException("Los mapas deben ser números iguales o superiores a 0.")
+        If Not Integer.TryParse(control.Text.Trim(), value) OrElse value < 0 OrElse value > 1024 Then
+            Throw New ArgumentException("Los mapas deben ser números entre 0 y 1024.")
         End If
         Return value
     End Function
 
     Private Shared Function ReadLimit(control As TextBox) As Integer
         Dim value As Integer
-        If Not Integer.TryParse(control.Text.Trim(), value) Then
-            Throw New ArgumentException("Los límites deben ser números enteros.")
+        If Not Integer.TryParse(control.Text.Trim(), value) OrElse value < 1 OrElse value > 99 Then
+            Throw New ArgumentException("Los límites deben ser números entre 1 y 99.")
         End If
         Return value
     End Function

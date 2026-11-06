@@ -1,7 +1,13 @@
-[Mapa171]
-Name=Luna de Miel
-MusicNum=1
-StartPos=0-0-0
-Restringir=No
+[MAPA171]
+Name=CASTIGO TALAR
+MusicNum=0
+MagiaSinefecto=1
+InviSinEfecto=1
+ResuSinEfecto=0
+NoEncriptarMP=0
 Terreno=BOSQUE
-Zona=CIUDAD
+Zona=CAMPO
+Restringir=No
+BackUp= 0
+Pk=1
+SeCaenItems=1

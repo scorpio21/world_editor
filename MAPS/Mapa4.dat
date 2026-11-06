@@ -1,12 +1,14 @@
 [Mapa4]
-Name=suburbios infectados
-MusicNum=3-1
+Name=Suburbios infectados
+MusicNum=1
 StartPos=0-0-0
 Terreno=BOSQUE
 Zona=CAMPO
 Restringir=No
-[Mapas Aomania 4.0\Mapas Aomania 4.0\Mapa4]
-StartPos=0-0-0
-Terreno=NIEVE
-Zona=CAMPO
-Restringir=No
+MagiaSinefecto=0
+NoEncriptarMP=0
+BackUp= 0
+Pk=0
+SeCaenItems=1
+InviSinEfecto=0
+ResuSinEfecto=0

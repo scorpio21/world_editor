@@ -43,6 +43,8 @@ Namespace WorldEditorNet
         Private _emptyMapView As Boolean = True
         Private _cursorX As Integer
         Private _cursorY As Integer
+        Private _viewportX As Integer = 50
+        Private _viewportY As Integer = 50
 
         Private NotInheritable Class AnimationState
             Public Property GrhIndex As Integer
@@ -93,6 +95,10 @@ Namespace WorldEditorNet
             Set(value As MapV1Document)
                 _document = value
                 _hasUndo = False
+                If _document Is Nothing Then
+                    _viewportX = 50
+                    _viewportY = 50
+                End If
                 Invalidate()
             End Set
         End Property
@@ -107,6 +113,28 @@ Namespace WorldEditorNet
                 Invalidate()
             End Set
         End Property
+
+        Public ReadOnly Property ViewportX As Integer
+            Get
+                Return _viewportX
+            End Get
+        End Property
+
+        Public ReadOnly Property ViewportY As Integer
+            Get
+                Return _viewportY
+            End Get
+        End Property
+
+        Public Sub SetViewport(ByVal centerX As Integer, ByVal centerY As Integer)
+            _viewportX = Math.Max(XMinMapSize, Math.Min(XMaxMapSize, centerX))
+            _viewportY = Math.Max(YMinMapSize, Math.Min(YMaxMapSize, centerY))
+            Invalidate()
+        End Sub
+
+        Public Sub MoveViewport(ByVal deltaX As Integer, ByVal deltaY As Integer)
+            SetViewport(_viewportX + deltaX, _viewportY + deltaY)
+        End Sub
 
         Public ReadOnly Property SelectedX As Integer
             Get
@@ -334,6 +362,42 @@ Namespace WorldEditorNet
                                New Rectangle(record.X, record.Y, record.Width, record.Height),
                                GraphicsUnit.Pixel)
             Return True
+        End Function
+
+        Public Function CreateRadarBitmap(ByVal width As Integer, ByVal height As Integer) As Bitmap
+            Dim bitmap As New Bitmap(Math.Max(1, width), Math.Max(1, height))
+            Using graphics As Graphics = Graphics.FromImage(bitmap)
+                graphics.Clear(Color.DarkGreen)
+                If _document Is Nothing Then Return bitmap
+
+                For y As Integer = 1 To 100
+                    For x As Integer = 1 To 100
+                        Dim cell As MapV1Cell = _document.Cells(x, y)
+                        Dim color As Color = Color.FromArgb(0, 110, 0)
+                        Dim record As GrhIndexRecord = Nothing
+                        If _graphicsIndex IsNot Nothing AndAlso
+                           _graphicsIndex.TryGetFrame(cell.Graphic1, 1, record) AndAlso
+                           record IsNot Nothing Then
+                            Dim sourceBitmap As Bitmap = GetBitmap(record.FileNumber)
+                            If sourceBitmap IsNot Nothing AndAlso
+                               record.X >= 0 AndAlso record.Y >= 0 AndAlso
+                               record.X < sourceBitmap.Width AndAlso record.Y < sourceBitmap.Height Then
+                                color = sourceBitmap.GetPixel(
+                                    Math.Min(sourceBitmap.Width - 1, record.X + Math.Max(0, record.Width \ 2)),
+                                    Math.Min(sourceBitmap.Height - 1, record.Y + Math.Max(0, record.Height \ 2)))
+                            End If
+                        End If
+                        Using brush As New SolidBrush(color)
+                            Dim left As Integer = (x - 1) * width \ 100
+                            Dim top As Integer = (y - 1) * height \ 100
+                            Dim right As Integer = Math.Max(left + 1, x * width \ 100)
+                            Dim bottom As Integer = Math.Max(top + 1, y * height \ 100)
+                            graphics.FillRectangle(brush, left, top, right - left, bottom - top)
+                        End Using
+                    Next
+                Next
+            End Using
+            Return bitmap
         End Function
 
         Public Function SetSelectedGraphicWithPattern(ByVal layer As Integer,
@@ -687,12 +751,19 @@ Namespace WorldEditorNet
             End If
 
             Using gridPen As New Pen(Color.LightGray)
-                Using blockedBrush As New SolidBrush(Color.FromArgb(150, Color.IndianRed))
+            Using blockedBrush As New SolidBrush(Color.Red)
                     Using selectedBrush As New SolidBrush(Color.FromArgb(120, Color.Gold))
-                        For y As Integer = 1 To 100
-                            For x As Integer = 1 To 100
-                                Dim left As Integer = (x - 1) * _cellSize
-                                Dim top As Integer = (y - 1) * _cellSize
+                        Dim visibleColumns As Integer = Math.Max(1, ParentClientWidth() \ _cellSize)
+                        Dim visibleRows As Integer = Math.Max(1, ParentClientHeight() \ _cellSize)
+                        Dim firstX As Integer = Math.Max(1, _viewportX - visibleColumns \ 2)
+                        Dim firstY As Integer = Math.Max(1, _viewportY - visibleRows \ 2)
+                        Dim lastX As Integer = Math.Min(100, firstX + visibleColumns)
+                        Dim lastY As Integer = Math.Min(100, firstY + visibleRows)
+
+                        For y As Integer = firstY To lastY
+                            For x As Integer = firstX To lastX
+                                Dim left As Integer = (x - firstX) * _cellSize
+                                Dim top As Integer = (y - firstY) * _cellSize
                                 Dim cellRect As New Rectangle(left, top, _cellSize, _cellSize)
 
                                 Dim hasGraphic As Boolean = False
@@ -704,17 +775,45 @@ Namespace WorldEditorNet
                                     If _showLayer3 AndAlso DrawGraphic(e.Graphics, cell.Graphic3, x, y, 3, left, top, yOffset) Then hasGraphic = True
                                     If _showLayer4 AndAlso DrawGraphic(e.Graphics, cell.Graphic4, x, y, 4, left, top, yOffset) Then hasGraphic = True
 
+                                    ' VB6 reconstruye ObjGrh al cargar el mapa a
+                                    ' partir de OBJ.dat y lo dibuja centrado. El
+                                    ' mapa solo almacena el índice y la cantidad.
+                                    Dim objectDrawn As Boolean = False
+                                    If _showObjects AndAlso cell.ObjIndex > 0 AndAlso
+                                       LegacyDeclarations.ObjDataArray IsNot Nothing AndAlso
+                                       cell.ObjIndex < LegacyDeclarations.ObjDataArray.Length Then
+                                        Dim objectGrh As Short = LegacyDeclarations.ObjDataArray(cell.ObjIndex).GrhIndex
+                                        objectDrawn = DrawGraphic(e.Graphics, objectGrh, x, y, 5, left, top, yOffset)
+                                    End If
+
+                                    ' VB6 dibuja el cuerpo del NPC y, si existe,
+                                    ' su cabeza sobre la misma celda. El índice
+                                    ' de dirección es 1=Norte, 2=Este, 3=Sur, 4=Oeste.
+                                    Dim npcDrawn As Boolean = False
+                                    If _showNpcs AndAlso cell.NpcIndex > 0 AndAlso
+                                       LegacyDeclarations.NpcDataArray IsNot Nothing AndAlso
+                                       cell.NpcIndex < LegacyDeclarations.NpcDataArray.Length Then
+                                        npcDrawn = DrawNpc(e.Graphics, LegacyDeclarations.NpcDataArray(cell.NpcIndex),
+                                                          x, y, left, top, yOffset)
+                                    End If
+
                                     If Not hasGraphic AndAlso cell.Graphic1 <> 0 Then
                                         TextRenderer.DrawText(e.Graphics, cell.Graphic1.ToString(), Font,
                                                                New Point(left + 2, top + 2), Color.Black,
                                                                TextFormatFlags.NoPadding)
                                     End If
 
-                                    DrawMetadataMarkers(e.Graphics, cell, left, top)
+                                    DrawMetadataMarkers(e.Graphics, cell, left, top, objectDrawn, npcDrawn)
                                 End If
 
                                 If _showBlocked AndAlso _document IsNot Nothing AndAlso _document.Cells(x, y).Blocked <> 0 Then
-                                    e.Graphics.FillRectangle(blockedBrush, cellRect)
+                                    ' VB6: DrawBox(celda + 16, celda + 16, celda + 21, celda + 21).
+                                    Dim markerSize As Integer = Math.Min(5, Math.Max(1, _cellSize))
+                                    Dim markerOffset As Integer = Math.Min(16, Math.Max(0, _cellSize - markerSize))
+                                    e.Graphics.FillRectangle(blockedBrush,
+                                                              cellRect.Left + markerOffset,
+                                                              cellRect.Top + markerOffset,
+                                                              markerSize, markerSize)
                                 End If
                                 If x = _selectedX AndAlso y = _selectedY Then
                                     e.Graphics.FillRectangle(selectedBrush, cellRect)
@@ -737,13 +836,15 @@ Namespace WorldEditorNet
         End Sub
 
         Private Sub DrawMetadataMarkers(graphics As Graphics, cell As MapV1Cell,
-                                        left As Integer, top As Integer)
+                                        left As Integer, top As Integer,
+                                        Optional objectDrawn As Boolean = False,
+                                        Optional npcDrawn As Boolean = False)
             Dim markerY As Integer = top + 2
-            If _showNpcs AndAlso cell.NpcIndex <> 0 Then
+            If _showNpcs AndAlso cell.NpcIndex <> 0 AndAlso Not npcDrawn Then
                 DrawMarker(graphics, "N" & cell.NpcIndex, left + 2, markerY, Color.DarkBlue)
                 markerY += Font.Height
             End If
-            If _showObjects AndAlso cell.ObjIndex <> 0 Then
+            If _showObjects AndAlso cell.ObjIndex <> 0 AndAlso Not objectDrawn Then
                 DrawMarker(graphics, "O" & cell.ObjIndex, left + 2, markerY, Color.DarkGreen)
                 markerY += Font.Height
             End If
@@ -755,6 +856,36 @@ Namespace WorldEditorNet
                 DrawMarker(graphics, "T" & cell.Trigger, left + 2, markerY, Color.Red)
             End If
         End Sub
+
+        Private Function DrawNpc(graphics As Graphics,
+                                  npc As NpcData,
+                                  cellX As Integer,
+                                  cellY As Integer,
+                                  left As Integer,
+                                  top As Integer,
+                                  ByRef yOffset As Integer) As Boolean
+            Dim direction As Integer = npc.Heading
+            If direction < 1 OrElse direction > 4 Then Return False
+            If npc.Body <= 0 OrElse LegacyDeclarations.BodyData Is Nothing OrElse
+               npc.Body >= LegacyDeclarations.BodyData.Length Then Return False
+
+            Dim body As tBodyData = LegacyDeclarations.BodyData(npc.Body)
+            If body.Walk Is Nothing OrElse direction >= body.Walk.Length Then Return False
+            Dim bodyDrawn As Boolean = DrawGraphic(graphics, body.Walk(direction).GrhIndex,
+                                                   cellX, cellY, 5, left, top, yOffset)
+            If Not bodyDrawn Then Return False
+
+            If npc.Head > 0 AndAlso LegacyDeclarations.HeadData IsNot Nothing AndAlso
+               npc.Head < LegacyDeclarations.HeadData.Length Then
+                Dim head As tHeadData = LegacyDeclarations.HeadData(npc.Head)
+                If head.Head IsNot Nothing AndAlso direction < head.Head.Length Then
+                    DrawGraphic(graphics, head.Head(direction).GrhIndex,
+                                cellX, cellY, 6, left + body.HeadOffset.X,
+                                top + body.HeadOffset.Y, yOffset)
+                End If
+            End If
+            Return True
+        End Function
 
         Private Sub DrawMarker(graphics As Graphics, text As String,
                                left As Integer, top As Integer, color As Color)
@@ -776,7 +907,17 @@ Namespace WorldEditorNet
             If bitmap Is Nothing OrElse record.X < 0 OrElse record.Y < 0 OrElse
                record.X + record.Width > bitmap.Width OrElse record.Y + record.Height > bitmap.Height Then Return False
 
-            Dim destination As New Rectangle(left, top, _cellSize, _cellSize)
+            ' VB6 dibuja el GRH con su tamaño real. Solo las superficies de la
+            ' primera capa parten de la esquina de la celda; las capas superiores
+            ' se centran sobre ella, igual que DDrawTransGrhtoSurface(Center=1).
+            Dim drawLeft As Integer = left
+            Dim drawTop As Integer = top
+            If layer > 1 Then
+                drawLeft -= CInt(Math.Truncate((record.Width - _cellSize) / 2.0R))
+                drawTop -= record.Height - _cellSize
+            End If
+
+            Dim destination As New Rectangle(drawLeft, drawTop, record.Width, record.Height)
             Dim source As New Rectangle(record.X, record.Y, record.Width, record.Height)
             graphics.DrawImage(bitmap, destination, source, GraphicsUnit.Pixel)
             yOffset += Font.Height
@@ -866,6 +1007,7 @@ Namespace WorldEditorNet
 
         Protected Overrides Sub OnMouseDown(e As MouseEventArgs)
             MyBase.OnMouseDown(e)
+            Focus()
             If e.Button = MouseButtons.Left AndAlso _brushEnabled Then
                 Capture = True
                 SelectCellAt(e.X, e.Y, paint:=True)
@@ -886,8 +1028,8 @@ Namespace WorldEditorNet
         End Sub
 
         Private Sub UpdateCursorCell(pixelX As Integer, pixelY As Integer)
-            Dim x As Integer = (pixelX \ _cellSize) + 1
-            Dim y As Integer = (pixelY \ _cellSize) + 1
+            Dim x As Integer = ViewportCellX(pixelX)
+            Dim y As Integer = ViewportCellY(pixelY)
             If x < 1 OrElse x > 100 OrElse y < 1 OrElse y > 100 Then
                 _cursorX = 0
                 _cursorY = 0
@@ -901,8 +1043,8 @@ Namespace WorldEditorNet
         Private Sub SelectCellAt(ByVal pixelX As Integer,
                                  ByVal pixelY As Integer,
                                  ByVal paint As Boolean)
-            Dim x As Integer = (pixelX \ _cellSize) + 1
-            Dim y As Integer = (pixelY \ _cellSize) + 1
+            Dim x As Integer = ViewportCellX(pixelX)
+            Dim y As Integer = ViewportCellY(pixelY)
             If x < 1 OrElse x > 100 OrElse y < 1 OrElse y > 100 Then Return
 
             Dim changedCell As Boolean = _selectedX <> x OrElse _selectedY <> y
@@ -920,5 +1062,25 @@ Namespace WorldEditorNet
             AutoSize = False
             Size = New Size(_cellSize * 100 + 1, _cellSize * 100 + 1)
         End Sub
+
+        Private Function ParentClientWidth() As Integer
+            Return If(Parent Is Nothing, ClientSize.Width, Parent.ClientSize.Width)
+        End Function
+
+        Private Function ParentClientHeight() As Integer
+            Return If(Parent Is Nothing, ClientSize.Height, Parent.ClientSize.Height)
+        End Function
+
+        Private Function ViewportCellX(ByVal pixelX As Integer) As Integer
+            Dim visibleColumns As Integer = Math.Max(1, ParentClientWidth() \ _cellSize)
+            Dim firstX As Integer = Math.Max(1, _viewportX - visibleColumns \ 2)
+            Return firstX + (pixelX \ _cellSize)
+        End Function
+
+        Private Function ViewportCellY(ByVal pixelY As Integer) As Integer
+            Dim visibleRows As Integer = Math.Max(1, ParentClientHeight() \ _cellSize)
+            Dim firstY As Integer = Math.Max(1, _viewportY - visibleRows \ 2)
+            Return firstY + (pixelY \ _cellSize)
+        End Function
     End Class
 End Namespace

@@ -1,6 +1,7 @@
 Imports WorldEditorNet.WorldEditorNet.Core
 Imports System.Drawing
 Imports System.IO
+Imports System.Linq
 Imports System.Windows.Forms
 
 Namespace WorldEditorNet
@@ -49,6 +50,7 @@ Namespace WorldEditorNet
         Private _npcMode As NpcEditMode
         Private _triggerMode As TriggerEditMode
         Private _mapLoaded As Boolean
+        Private ReadOnly _mapTabPaths As String() = New String(12) {}
         Private ReadOnly _fpsTimer As New Timer With {.Interval = 1000}
         Private _framesThisSecond As Integer
         Private ReadOnly _loadingForm As frmCargando
@@ -101,6 +103,7 @@ Namespace WorldEditorNet
                 triggersPanelButton}(index)
             selected.Selected = True
             SetFunctionMode(index)
+            If index = 2 Then SetBlockedVisibility(True)
             If index <> 5 Then
                 _objectInsertEnabled = False
                 _objectRemoveEnabled = False
@@ -193,6 +196,22 @@ Namespace WorldEditorNet
                     SelectPanelMode(5, "Objetos")
                 Case Keys.F12
                     SelectPanelMode(6, "Trigger's")
+                Case Keys.Up
+                    If Not _mapLoaded Then Return
+                    mapSurface.MoveViewport(0, -1)
+                    RefreshRadar()
+                Case Keys.Right
+                    If Not _mapLoaded Then Return
+                    mapSurface.MoveViewport(1, 0)
+                    RefreshRadar()
+                Case Keys.Down
+                    If Not _mapLoaded Then Return
+                    mapSurface.MoveViewport(0, 1)
+                    RefreshRadar()
+                Case Keys.Left
+                    If Not _mapLoaded Then Return
+                    mapSurface.MoveViewport(-1, 0)
+                    RefreshRadar()
                 Case Else
                     Return
             End Select
@@ -212,11 +231,15 @@ Namespace WorldEditorNet
                 _loadingForm?.SetLoadingStep(5, "Iniciando ventana de edición...")
                 CreateNewMap()
                 FPS.Text = "FPS: 0"
+                RefreshRadar()
                 AddHandler _fpsTimer.Tick, AddressOf FpsTimer_Tick
                 _fpsTimer.Start()
                 radarPictureBox.SendToBack()
                 Shape1.SendToBack()
-                ApuntadorRadar.BringToFront()
+                ' El indicador se pinta sobre la imagen del radar para que el
+                ' rectángulo sea transparente, como el Shape del VB6.
+                Shape1.Visible = False
+                ApuntadorRadar.Visible = False
             Finally
                 If _loadingForm IsNot Nothing Then
                     _loadingForm.Hide()
@@ -236,8 +259,8 @@ Namespace WorldEditorNet
 
         Private Sub MapSurface_MouseMove(sender As Object, e As MouseEventArgs) _
             Handles mapSurface.MouseMove
-            Dim x As Integer = (e.X \ mapSurface.CellSize) + 1
-            Dim y As Integer = (e.Y \ mapSurface.CellSize) + 1
+            Dim x As Integer = mapSurface.ViewportX - (ParentVisibleColumns() \ 2) + (e.X \ mapSurface.CellSize)
+            Dim y As Integer = mapSurface.ViewportY - (ParentVisibleRows() \ 2) + (e.Y \ mapSurface.CellSize)
             If x >= 1 AndAlso x <= 100 AndAlso y >= 1 AndAlso y <= 100 Then
                 POSX.Text = $"X: {x} - Y: {y}"
                 If x < 10 OrElse y < 10 OrElse x > 90 OrElse y > 90 Then
@@ -256,8 +279,44 @@ Namespace WorldEditorNet
             Dim y As Integer = Math.Max(1, Math.Min(100, CInt(e.Y * 100 / Math.Max(1, radarPictureBox.ClientSize.Height))))
             ApuntadorRadar.Left = Math.Max(Shape1.Left, Shape1.Left + CInt((x - 1) * Shape1.Width / 100.0R))
             ApuntadorRadar.Top = Math.Max(Shape1.Top, Shape1.Top + CInt((y - 1) * Shape1.Height / 100.0R))
+            mapSurface.SetViewport(x, y)
             POSX.Text = $"X: {x} - Y: {y}"
             ApuntadorRadar.BringToFront()
+            RefreshRadar()
+        End Sub
+
+        Private Function ParentVisibleColumns() As Integer
+            Return Math.Max(1, MainViewShp.ClientSize.Width \ mapSurface.CellSize)
+        End Function
+
+        Private Function ParentVisibleRows() As Integer
+            Return Math.Max(1, MainViewShp.ClientSize.Height \ mapSurface.CellSize)
+        End Function
+
+        Private Sub RefreshRadar()
+            If radarPictureBox.ClientSize.Width <= 0 OrElse radarPictureBox.ClientSize.Height <= 0 Then Return
+            Dim previous As Image = radarPictureBox.Image
+            Dim radarImage As Bitmap = mapSurface.CreateRadarBitmap(
+                radarPictureBox.ClientSize.Width, radarPictureBox.ClientSize.Height)
+            If previous IsNot Nothing Then previous.Dispose()
+
+            Dim columns As Integer = Math.Max(1, ParentVisibleColumns())
+            Dim rows As Integer = Math.Max(1, ParentVisibleRows())
+            Dim pointerWidth As Integer = Math.Max(2, CInt(columns * radarImage.Width / 100.0R))
+            Dim pointerHeight As Integer = Math.Max(2, CInt(rows * radarImage.Height / 100.0R))
+            Dim pointerLeft As Integer = CInt((mapSurface.ViewportX - 1 - columns \ 2) * radarImage.Width / 100.0R)
+            Dim pointerTop As Integer = CInt((mapSurface.ViewportY - 1 - rows \ 2) * radarImage.Height / 100.0R)
+            pointerLeft = Math.Max(0, Math.Min(radarImage.Width - pointerWidth, pointerLeft))
+            pointerTop = Math.Max(0, Math.Min(radarImage.Height - pointerHeight, pointerTop))
+
+            Using radarGraphics As Graphics = Graphics.FromImage(radarImage)
+                Using pointerPen As New Pen(Color.White, 1.0F)
+                    radarGraphics.DrawRectangle(pointerPen, pointerLeft, pointerTop,
+                                                pointerWidth - 1, pointerHeight - 1)
+                End Using
+            End Using
+
+            radarPictureBox.Image = radarImage
         End Sub
 
         Private Sub LoadLegacyIndices()
@@ -285,7 +344,23 @@ Namespace WorldEditorNet
                 _startupMessage &= " - índices INI no cargados: " & ex.Message
             End Try
 
-            _loadingForm?.SetLoadingStep(2, "Cargando Cabezas...")
+            _loadingForm?.SetLoadingStep(2, "Cargando Cuerpos...")
+            Try
+                LegacyDeclarations.BodyData = LegacyIndicesLoader.LoadBodies(_settings.DirIndex)
+                LegacyDeclarations.NumBodies = CShort(Math.Min(LegacyDeclarations.BodyData.Length - 1, Short.MaxValue))
+            Catch ex As Exception
+                _startupMessage &= " - Personajes.ind no cargado: " & ex.Message
+            End Try
+
+            _loadingForm?.SetLoadingStep(3, "Cargando Cabezas...")
+            Try
+                LegacyDeclarations.HeadData = LegacyIndicesLoader.LoadHeads(_settings.DirIndex)
+                LegacyDeclarations.Numheads = CShort(Math.Min(LegacyDeclarations.HeadData.Length - 1, Short.MaxValue))
+            Catch ex As Exception
+                _startupMessage &= " - Cabezas.ind no cargado: " & ex.Message
+            End Try
+
+            _loadingForm?.SetLoadingStep(4, "Cargando NPC's...")
             Try
                 LegacyDeclarations.NpcDataArray = LegacyIndicesLoader.LoadNpcs(_settings.DirDats)
                 npcListBox.Items.Clear()
@@ -306,13 +381,13 @@ Namespace WorldEditorNet
                 _startupMessage &= " - NPCs no cargados: " & ex.Message
             End Try
 
-            _loadingForm?.SetLoadingStep(3, "Cargando NPC's...")
+            _loadingForm?.SetLoadingStep(5, "Cargando objetos...")
             Try
                 LegacyDeclarations.ObjDataArray = LegacyIndicesLoader.LoadObjects(_settings.DirDats)
                 LegacyDeclarations.NumOBJs = CShort(Math.Min(LegacyDeclarations.ObjDataArray.Length - 1, Short.MaxValue))
                 objectListBox.Items.Clear()
                 For index As Integer = 1 To LegacyDeclarations.NumOBJs
-                    _loadingForm?.SetLoadingStep(4, $"Cargando Datos de Objetos...{index}/{LegacyDeclarations.NumOBJs}")
+                    _loadingForm?.SetLoadingStep(5, $"Cargando Datos de Objetos...{index}/{LegacyDeclarations.NumOBJs}")
                     Application.DoEvents()
                     objectListBox.Items.Add(LegacyDeclarations.ObjDataArray(index).Name & " - #" & index)
                 Next
@@ -753,6 +828,9 @@ Namespace WorldEditorNet
                     .X = CShort(mapSurface.SelectedX),
                     .Y = CShort(mapSurface.SelectedY)}
             End If
+            _settings.UserPos = New Position With {
+                .X = CShort(mapSurface.ViewportX),
+                .Y = CShort(mapSurface.ViewportY)}
             Try
                 WorldEditorSettingsSaver.Save(AppContext.BaseDirectory, _settings)
             Catch ex As Exception
@@ -761,22 +839,109 @@ Namespace WorldEditorNet
         End Sub
 
         Private Sub LoadSettings()
+            Dim loader As New WorldEditorSettingsLoader()
+
             Try
-                Dim loader As New WorldEditorSettingsLoader()
                 _settings = loader.Load(AppContext.BaseDirectory)
 
-                If _settings.ConfigurationMissing Then
-                    _startupMessage = "Nuevo mapa - configuración predeterminada"
-                Else
-                    _startupMessage = "Nuevo mapa - configuración cargada"
+                If Not HasRequiredResourceDirectories(_settings) Then
+                    If Not ConfigureResourceDirectories(_settings) Then
+                        _startupMessage = "Nuevo mapa - configuración pendiente"
+                        Return
+                    End If
+
+                    WorldEditorSettingsSaver.Save(AppContext.BaseDirectory, _settings)
+                    _settings = loader.Load(AppContext.BaseDirectory)
+                ElseIf _settings.ConfigurationMissing Then
+                    'Aunque el instalador no traiga el INI, persistimos las rutas
+                    'detectadas para que el siguiente arranque sea reproducible.
+                    WorldEditorSettingsSaver.Save(AppContext.BaseDirectory, _settings)
+                    _settings = loader.Load(AppContext.BaseDirectory)
                 End If
+
+                _startupMessage = "Nuevo mapa - configuración cargada"
             Catch ex As Exception
-                ' El editor puede abrirse aunque todavía no estén instalados los
-                ' recursos gráficos o las rutas históricas del INI.
-                _settings = Nothing
-                _startupMessage = "Nuevo mapa - configuración pendiente: " & ex.Message
+                _settings = CreateDefaultSettings()
+                If ConfigureResourceDirectories(_settings) Then
+                    Try
+                        WorldEditorSettingsSaver.Save(AppContext.BaseDirectory, _settings)
+                        _settings = loader.Load(AppContext.BaseDirectory)
+                        _startupMessage = "Nuevo mapa - configuración cargada"
+                    Catch saveException As Exception
+                        _startupMessage = "Nuevo mapa - configuración pendiente: " & saveException.Message
+                    End Try
+                Else
+                    _startupMessage = "Nuevo mapa - configuración pendiente: " & ex.Message
+                End If
             End Try
         End Sub
+
+        Private Shared Function CreateDefaultSettings() As WorldEditorSettings
+            Dim root As String = AppContext.BaseDirectory
+            Return New WorldEditorSettings With {
+                .IniPath = EnsureTrailingSeparator(root),
+                .DirGraficos = EnsureTrailingSeparator(Path.Combine(root, "Graficos")),
+                .DirIndex = EnsureTrailingSeparator(Path.Combine(root, "INIT")),
+                .DirMidi = EnsureTrailingSeparator(Path.Combine(root, "MIDI")),
+                .DirDats = EnsureTrailingSeparator(Path.Combine(root, "DATS")),
+                .GuardarConfig = True,
+                .MaxGrhs = 32200,
+                .UserPos = New Position With {.X = 50, .Y = 50}}
+        End Function
+
+        Private Shared Function HasRequiredResourceDirectories(ByVal settings As WorldEditorSettings) As Boolean
+            If settings Is Nothing Then Return False
+            If Not DirectoryHasFiles(settings.DirGraficos) Then Return False
+            If Not Directory.Exists(settings.DirMidi) Then Return False
+            If Not DirectoryHasFiles(settings.DirDats) Then Return False
+            If Not File.Exists(Path.Combine(settings.DirIndex, "Graficos.ind")) Then Return False
+            Return True
+        End Function
+
+        Private Shared Function DirectoryHasFiles(ByVal path As String) As Boolean
+            If String.IsNullOrWhiteSpace(path) OrElse Not Directory.Exists(path) Then Return False
+            Return Directory.EnumerateFiles(path, "*", SearchOption.TopDirectoryOnly).Any()
+        End Function
+
+        Private Function ConfigureResourceDirectories(ByVal settings As WorldEditorSettings) As Boolean
+            Dim selections = New (String, String)() {
+                ("Graficos", settings.DirGraficos),
+                ("DATS", settings.DirDats),
+                ("INIT", settings.DirIndex),
+                ("MIDI", settings.DirMidi)}
+
+            For Each selection In selections
+                Using dialog As New FolderBrowserDialog()
+                    dialog.Description = "Selecciona la carpeta " & selection.Item1 & " del WorldEditor."
+                    dialog.ShowNewFolderButton = False
+                    If Directory.Exists(selection.Item2) Then dialog.SelectedPath = selection.Item2
+                    If dialog.ShowDialog(Me) <> DialogResult.OK Then Return False
+
+                    Dim selectedPath As String = EnsureTrailingSeparator(Path.GetFullPath(dialog.SelectedPath))
+                    Select Case selection.Item1
+                        Case "Graficos"
+                            settings.DirGraficos = selectedPath
+                        Case "DATS"
+                            settings.DirDats = selectedPath
+                        Case "INIT"
+                            settings.DirIndex = selectedPath
+                        Case "MIDI"
+                            settings.DirMidi = selectedPath
+                    End Select
+                End Using
+            Next
+
+            Return HasRequiredResourceDirectories(settings)
+        End Function
+
+        Private Shared Function EnsureTrailingSeparator(ByVal directoryPath As String) As String
+            If String.IsNullOrWhiteSpace(directoryPath) Then Return String.Empty
+            Dim normalized As String = System.IO.Path.GetFullPath(directoryPath)
+            If normalized.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal) Then
+                Return normalized
+            End If
+            Return normalized & Path.DirectorySeparatorChar
+        End Function
 
         Private Sub LoadGraphicsIndex()
             If _settings Is Nothing Then Return
@@ -804,18 +969,28 @@ Namespace WorldEditorNet
         Private Sub OpenMapMenuItem_Click(sender As Object, e As EventArgs) Handles openMapMenuItem.Click
             If Not ConfirmSaveChanges() Then Return
             If openMapDialog.ShowDialog(Me) <> DialogResult.OK Then Return
+            OpenMapFile(openMapDialog.FileName)
+        End Sub
+
+        Private Sub OpenMapFile(ByVal fileName As String)
             Try
                 Dim codec As New MapV1Codec()
-                _document = codec.Load(openMapDialog.FileName)
-                _mapPath = openMapDialog.FileName
+                _document = codec.Load(fileName)
+                _mapPath = fileName
                 _mapLoaded = True
                 mapSurface.Document = _document
+                mapSurface.SetViewport(If(_settings Is Nothing, 50, _settings.UserPos.X),
+                                       If(_settings Is Nothing, 50, _settings.UserPos.Y))
                 mapSurface.EmptyMapView = False
                 MainViewShp.BackColor = Color.Black
+                MainViewShp.Enabled = True
                 MainViewShp.Visible = True
                 MainViewShp.BringToFront()
                 mapSurface.BringToFront()
                 panelStateRow.Visible = True
+                RefreshMapTabs(_mapPath)
+                LoadMapInfo(_mapPath)
+                RefreshRadar()
                 DisableBrush()
                 undoMenuItem.Enabled = False
                 UpdateMapStatus()
@@ -824,6 +999,48 @@ Namespace WorldEditorNet
                                 MessageBoxButtons.OK, MessageBoxIcon.Error)
             End Try
         End Sub
+
+        Private Sub MapPest_Click(sender As Object, e As EventArgs) _
+            Handles MapPest1.Click, MapPest2.Click, MapPest3.Click,
+                    MapPest4.Click, MapPest5.Click, MapPest6.Click,
+                    MapPest7.Click, MapPest8.Click, MapPest9.Click,
+                    MapPest10.Click, MapPest11.Click, MapPest12.Click,
+                    MapPest13.Click
+            If Not _mapLoaded OrElse String.IsNullOrWhiteSpace(_mapPath) Then Return
+            If Not ConfirmSaveChanges() Then Return
+
+            Dim tabIndex As Integer = Array.IndexOf(GetMapTabLabels(), DirectCast(sender, Label))
+            If tabIndex < 0 OrElse tabIndex > _mapTabPaths.GetUpperBound(0) Then Return
+
+            Dim mapPath As String = _mapTabPaths(tabIndex)
+            If String.IsNullOrWhiteSpace(mapPath) OrElse Not File.Exists(mapPath) Then Return
+            OpenMapFile(mapPath)
+        End Sub
+
+        Private Function TryGetMapTabPath(ByVal currentMapPath As String,
+                                          ByVal tabIndex As Integer,
+                                          ByRef mapPath As String) As Boolean
+            If tabIndex < 0 OrElse tabIndex > 12 Then Return False
+
+            Dim mapName As String = Path.GetFileNameWithoutExtension(currentMapPath)
+            Dim firstDigit As Integer = -1
+            For index As Integer = 0 To mapName.Length - 1
+                If Char.IsDigit(mapName(index)) Then
+                    firstDigit = index
+                    Exit For
+                End If
+            Next
+            If firstDigit < 1 OrElse firstDigit >= mapName.Length Then Return False
+
+            Dim mapNumber As Integer
+            If Not Integer.TryParse(mapName.Substring(firstDigit), mapNumber) Then Return False
+            Dim candidateNumber As Integer = mapNumber + tabIndex - 4
+            If candidateNumber < 0 Then Return False
+
+            mapPath = Path.Combine(Path.GetDirectoryName(currentMapPath),
+                                   mapName.Substring(0, firstDigit) & candidateNumber & ".map")
+            Return True
+        End Function
 
         Private Sub SaveMapMenuItem_Click(sender As Object, e As EventArgs) Handles saveMapMenuItem.Click
             SaveCurrentMap()
@@ -839,6 +1056,7 @@ Namespace WorldEditorNet
             Try
                 Dim codec As New MapV1Codec()
                 codec.Save(_mapPath, _document)
+                RefreshMapTabs(_mapPath)
                 UpdateMapStatus("Mapa guardado")
                 Return True
             Catch ex As Exception
@@ -1149,7 +1367,7 @@ Namespace WorldEditorNet
         End Sub
 
         Private Sub BlockedMenuItem_Click(sender As Object, e As EventArgs) Handles blockedMenuItem.Click
-            ToggleViewItem(blockedMenuItem, Sub(value) mapSurface.ShowBlocked = value)
+            SetBlockedVisibility(Not blockedMenuItem.Checked)
         End Sub
 
         Private Sub GridMenuItem_Click(sender As Object, e As EventArgs) Handles gridMenuItem.Click
@@ -1175,7 +1393,11 @@ Namespace WorldEditorNet
         ' Equivalentes de los eventos explícitos del frmMain.frm original.
         ' CBVerCuadricula y CBVerBloqueosA no tenían procedimiento Click en VB6.
         Private Sub CBVerBloqueosT_Click(sender As Object, e As EventArgs) Handles CBVerBloqueosT.Click
-            BlockedMenuItem_Click(blockedMenuItem, EventArgs.Empty)
+            SetBlockedVisibility(Not mapSurface.ShowBlocked)
+        End Sub
+
+        Private Sub ViewBlockingButton_Click(sender As Object, e As EventArgs) Handles viewBlockingButton.Click
+            SetBlockedVisibility(Not mapSurface.ShowBlocked)
         End Sub
 
         Private Sub CBVerTraslados_Click(sender As Object, e As EventArgs) Handles CBVerTraslados.Click
@@ -1205,6 +1427,12 @@ Namespace WorldEditorNet
             apply(item.Checked)
         End Sub
 
+        Private Sub SetBlockedVisibility(value As Boolean)
+            blockedMenuItem.Checked = value
+            mapSurface.ShowBlocked = value
+            CBVerBloqueosT.BackColor = If(value, Color.LightGreen, SystemColors.Control)
+        End Sub
+
         Private Sub MapSurface_CellSelected(sender As Object, e As EventArgs) Handles mapSurface.CellSelected
             If _settings IsNot Nothing AndAlso _settings.AutoCapturarTranslados AndAlso
                mapSurface.SelectedX > 0 Then
@@ -1223,6 +1451,7 @@ Namespace WorldEditorNet
 
         Private Sub MapSurface_CellEdited(sender As Object, e As EventArgs) Handles mapSurface.CellEdited
             UpdateMapStatus("Mapa modificado")
+            RefreshRadar()
         End Sub
 
         Private Sub CreateNewMap()
@@ -1254,13 +1483,104 @@ Namespace WorldEditorNet
             MainViewShp.BringToFront()
             mapSurface.BringToFront()
             panelStateRow.Visible = False
+            ResetMapTabs()
+            SetDefaultMapInfo()
             DisableBrush()
             undoMenuItem.Enabled = False
             mapSurface.GraphicsIndex = _graphicsIndex
             If _settings IsNot Nothing Then mapSurface.GraphicsDirectory = _settings.DirGraficos
+            mapSurface.SetViewport(If(_settings Is Nothing, 50, _settings.UserPos.X),
+                                   If(_settings Is Nothing, 50, _settings.UserPos.Y))
+            RefreshRadar()
             ApplySettingsToView()
             mapSurface.ResetSelection()
             UpdateMapStatus(If(String.IsNullOrWhiteSpace(_startupMessage), "Nuevo mapa", _startupMessage))
+        End Sub
+
+        'Equivalente a Pestañas() de modMapIO.bas.
+        'VB6 muestra las ventanas de mapas vecinos que realmente existen y
+        'oculta las posiciones restantes de la matriz MapPest.
+        Private Sub RefreshMapTabs(ByVal mapPath As String)
+            ResetMapTabs()
+
+            If String.IsNullOrWhiteSpace(mapPath) OrElse Not File.Exists(mapPath) Then Return
+
+            Dim mapName As String = Path.GetFileNameWithoutExtension(mapPath)
+            Dim firstDigit As Integer = -1
+            For index As Integer = 0 To mapName.Length - 1
+                If Char.IsDigit(mapName(index)) Then
+                    firstDigit = index
+                    Exit For
+                End If
+            Next
+
+            If firstDigit < 1 OrElse firstDigit >= mapName.Length Then Return
+
+            Dim mapPrefix As String = mapName.Substring(0, firstDigit)
+            Dim mapNumber As Integer
+            If Not Integer.TryParse(mapName.Substring(firstDigit), mapNumber) Then Return
+
+            Dim tabLabels As Label() = GetMapTabLabels()
+            For relative As Integer = -4 To 8
+                Dim candidateNumber As Integer = mapNumber + relative
+                If candidateNumber < 0 Then Continue For
+
+                Dim candidatePath As String = Path.Combine(
+                    Path.GetDirectoryName(mapPath), mapPrefix & candidateNumber & ".map")
+                Dim tabIndex As Integer = relative + 4
+                If File.Exists(candidatePath) Then
+                    _mapTabPaths(tabIndex) = candidatePath
+                    tabLabels(tabIndex).Text = mapPrefix & candidateNumber
+                    tabLabels(tabIndex).Visible = True
+                    tabLabels(tabIndex).Enabled = True
+                End If
+            Next
+        End Sub
+
+        Private Sub ResetMapTabs()
+            Dim tabLabels As Label() = GetMapTabLabels()
+            For index As Integer = 0 To tabLabels.Length - 1
+                _mapTabPaths(index) = String.Empty
+                Dim tab As Label = tabLabels(index)
+                tab.Text = "Nada"
+                tab.Visible = False
+                tab.Enabled = False
+            Next
+        End Sub
+
+        Private Function GetMapTabLabels() As Label()
+            Return {
+                MapPest1, MapPest2, MapPest3, MapPest4, MapPest5,
+                MapPest6, MapPest7, MapPest8, MapPest9, MapPest10,
+                MapPest11, MapPest12, MapPest13}
+        End Function
+
+        Private Sub LoadMapInfo(ByVal mapPath As String)
+            SetDefaultMapInfo()
+            Dim infoPath As String = Path.ChangeExtension(mapPath, ".dat")
+            If Not File.Exists(infoPath) Then
+                lblMapVersion.Text = _document.MapVersion.ToString()
+                Return
+            End If
+
+            Try
+                Dim info As MapInfoRecord = New MapInfoFile().Load(infoPath)
+                lblMapNombre.Text = If(String.IsNullOrWhiteSpace(info.Name),
+                                       Path.GetFileNameWithoutExtension(mapPath), info.Name)
+                lblMapMusica.Text = If(String.IsNullOrWhiteSpace(info.Music), "0", info.Music)
+                lblMapVersion.Text = _document.MapVersion.ToString()
+                lblMapNivelMin.Text = info.MinLevel.ToString()
+            Catch ex As Exception
+                _startupMessage &= " - información del mapa no cargada: " & ex.Message
+                lblMapVersion.Text = _document.MapVersion.ToString()
+            End Try
+        End Sub
+
+        Private Sub SetDefaultMapInfo()
+            lblMapNombre.Text = "Nuevo Mapa"
+            lblMapMusica.Text = "0"
+            lblMapVersion.Text = If(_document Is Nothing, "0", _document.MapVersion.ToString())
+            lblMapNivelMin.Text = "0"
         End Sub
 
         Private Sub ApplySettingsToView()
@@ -1280,7 +1600,7 @@ Namespace WorldEditorNet
             mapSurface.ShowLayer2 = layer2MenuItem.Checked
             mapSurface.ShowLayer3 = layer3MenuItem.Checked
             mapSurface.ShowLayer4 = layer4MenuItem.Checked
-            mapSurface.ShowBlocked = blockedMenuItem.Checked
+            SetBlockedVisibility(blockedMenuItem.Checked)
             mapSurface.ShowNpcs = npcsMenuItem.Checked
             mapSurface.ShowObjects = objectsMenuItem.Checked
             mapSurface.ShowTranslados = transladosMenuItem.Checked

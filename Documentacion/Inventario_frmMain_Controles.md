@@ -438,15 +438,19 @@ Todos estos controles deben existir físicamente en el diseñador de `MainForm` 
   objetos del VB6.
 - ✅ `insertTransferObjectButton` coloca el objeto configurado en
   `CONFIGURACION/ObjTranslado` cuando su tipo es 19, junto al translado.
-- ⚠️ `unionAutoButton` sigue pendiente: el comportamiento original depende de
-  la ventana `frmUnionAdyacente`, todavía no migrada.
+- ✅ `unionAutoButton` abre `UnionAdyacenteForm` y aplica los cuatro bordes
+  según las casillas seleccionadas.
 
 ### Lógica pendiente de `frmUnionAdyacente`
 
 - ✅ La lógica de aplicación está separada en `Core/AdjacentTransferService.vb`.
-- ⏳ Falta el formulario WinForms creado desde el diseñador con los controles
+- ✅ El formulario WinForms está creado desde el diseñador con los controles
   `Mapa(0..3)`, `Aplicar(0..3)`, `PosLim(0..7)`, `cmdAplicar`,
-  `cmdCancelar` y `cmdDefault`, además de sus menús de límites.
+  `cmdCancelar` y `cmdDefault`.
+- ✅ El perfil básico carga los límites `91, 10, 90, 11, 90, 11, 12, 89` y
+  vuelve a leer los translados existentes.
+- ✅ Se conservan las reglas VB6: mapas entre `0` y `1024`, límites entre `1`
+  y `99`, y Aplicar solo se habilita con algún borde seleccionado.
 
 ### Edición de objetos
 
@@ -469,6 +473,8 @@ Todos estos controles deben existir físicamente en el diseñador de `MainForm` 
 
 ## Pendiente de diseñador
 
-- Falta el formulario equivalente a `frmUnionAdyacente`. No se ha sustituido
-  por una ventana creada desde código. La lógica de los cuatro bordes ya está
-  en `Core/AdjacentTransferService.vb` y espera esos controles visuales.
+- ✅ El formulario equivalente a `frmUnionAdyacente` usa los controles del
+  diseñador y delega la modificación en `Core/AdjacentTransferService.vb`.
+- ⏳ Los perfiles VB6 `mnuLegal_Click` y `mnuUlla_Click` todavía no tienen
+  controles de menú equivalentes en el diseño actual; no se inventan hasta
+  incorporarlos al diseñador.

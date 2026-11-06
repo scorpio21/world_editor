@@ -22,6 +22,7 @@ Partial Class UnionAdyacenteForm
     'No lo modifique con el editor de código.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
+        components = New ComponentModel.Container()
         cmdAplicar = New System.Windows.Forms.Button()
         Mapa0TextBox = New System.Windows.Forms.TextBox()
         Mapa1TextBox = New System.Windows.Forms.TextBox()
@@ -77,7 +78,12 @@ Partial Class UnionAdyacenteForm
         Panel10 = New System.Windows.Forms.Panel()
         Panel11 = New System.Windows.Forms.Panel()
         Image1 = New System.Windows.Forms.PictureBox()
+        mnuDefault = New System.Windows.Forms.ContextMenuStrip(components)
+        mnuLegal = New System.Windows.Forms.ToolStripMenuItem()
+        mnuBasica = New System.Windows.Forms.ToolStripMenuItem()
+        mnuUlla = New System.Windows.Forms.ToolStripMenuItem()
         CType(Image1, ComponentModel.ISupportInitialize).BeginInit()
+        mnuDefault.SuspendLayout()
         SuspendLayout()
         ' 
         ' cmdAplicar
@@ -570,7 +576,7 @@ Partial Class UnionAdyacenteForm
         Panel5.Enabled = False
         Panel5.Location = New System.Drawing.Point(80, 48)
         Panel5.Name = "Panel5"
-        Panel5.Size = New System.Drawing.Size(286, 2)
+        Panel5.Size = New System.Drawing.Size(275, 2)
         Panel5.TabIndex = 48
         ' 
         ' Panel6
@@ -629,12 +635,36 @@ Partial Class UnionAdyacenteForm
         ' 
         ' Image1
         ' 
-        Image1.Image = Global.WorldEditorNet.My.Resources.EditorResources.mapa
+        Image1.Image = WorldEditorNet.My.Resources.EditorResources.mapa
         Image1.Location = New System.Drawing.Point(416, 8)
         Image1.Name = "Image1"
         Image1.Size = New System.Drawing.Size(449, 371)
         Image1.TabIndex = 55
         Image1.TabStop = False
+        ' 
+        ' mnuDefault
+        ' 
+        mnuDefault.Items.AddRange(New System.Windows.Forms.ToolStripItem() {mnuLegal, mnuBasica, mnuUlla})
+        mnuDefault.Name = "mnuDefault"
+        mnuDefault.Size = New System.Drawing.Size(203, 70)
+        ' 
+        ' mnuLegal
+        ' 
+        mnuLegal.Name = "mnuLegal"
+        mnuLegal.Size = New System.Drawing.Size(202, 22)
+        mnuLegal.Text = "Borde Legal Automatico"
+        ' 
+        ' mnuBasica
+        ' 
+        mnuBasica.Name = "mnuBasica"
+        mnuBasica.Size = New System.Drawing.Size(202, 22)
+        mnuBasica.Text = "11,10 y 90,91 - Basica"
+        ' 
+        ' mnuUlla
+        ' 
+        mnuUlla.Name = "mnuUlla"
+        mnuUlla.Size = New System.Drawing.Size(202, 22)
+        mnuUlla.Text = "9,7 y 92,94 - Ullathorpe"
         ' 
         ' UnionAdyacenteForm
         ' 
@@ -699,6 +729,7 @@ Partial Class UnionAdyacenteForm
         Name = "UnionAdyacenteForm"
         Text = "Unir mapas adyacentes"
         CType(Image1, ComponentModel.ISupportInitialize).EndInit()
+        mnuDefault.ResumeLayout(False)
         ResumeLayout(False)
         PerformLayout()
     End Sub
@@ -758,4 +789,8 @@ Partial Class UnionAdyacenteForm
     Friend WithEvents Panel10 As System.Windows.Forms.Panel
     Friend WithEvents Panel11 As System.Windows.Forms.Panel
     Friend WithEvents Image1 As System.Windows.Forms.PictureBox
+    Friend WithEvents mnuDefault As System.Windows.Forms.ContextMenuStrip
+    Friend WithEvents mnuLegal As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents mnuBasica As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents mnuUlla As System.Windows.Forms.ToolStripMenuItem
 End Class

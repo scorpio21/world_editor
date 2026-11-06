@@ -1,8 +1,13 @@
-[mapa37]
-Name=Newbie Dungeon
-MusicNum=7-1
-StartPos=0-0-0
-Terreno=BOSQUE
-Zona=DUNGEON
-Restringir=Si
+[MAPA37]
+MagiaSinefecto=0
+NoEncriptarMP=0
+BackUp= 1
 Pk=1
+Name=Ciudad Newbie
+MusicNum=5
+Terreno=BOSQUE
+Zona=CIUDAD
+Restringir=Si
+InviSinEfecto=0
+ResuSinEfecto=0
+SeCaenItems=1

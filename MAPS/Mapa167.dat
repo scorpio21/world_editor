@@ -1,9 +1,16 @@
 [Mapa167]
-Name=Sala de Invocaciones
-MusicNum=1
-StartPos=0-0-0
-Restringir=No
+Name=Capiata
+MusicNum=21-1
+StartPos=1-0-0
 Terreno=BOSQUE
-Zona=DUNGEON
-MinLevel=30
-PuedeMascotas=1
+Zona=CAMPO
+Restringir=No
+MagiaSinefecto=0
+InviSinEfecto=0
+ResuSinEfecto=0
+NoEncriptarMP=0
+BackUp= 0
+Pk=0
+SeCaenItems=1
+MinLevel=0
+PuedeMascotas=0

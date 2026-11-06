@@ -1,7 +1,14 @@
-[Mapa99]
-Name=Mar
-MusicNum=5-1
-StartPos=0-0-0
-Terreno=BOSQUE
-Zona=CAMPO
+[MAPA99]
+Zona=DUNGEON
 Restringir=No
+Name=Castillo Sur
+MagiaSinefecto=0
+NoEncriptarMP=0
+Terreno=NIEVE
+MinLevel=30
+BackUp= 0
+Pk=0
+MusicNum=19
+InviSinEfecto=0
+ResuSinEfecto=0
+SeCaenItems=1

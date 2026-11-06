@@ -136,13 +136,14 @@ Namespace WorldEditorNet.Core
                                                               ByVal fallbackName As String,
                                                               Optional ByVal legacyFallbackName As String = "") As String
             'El instalador puede incluir los recursos junto al ejecutable. En ese
-            'caso tienen prioridad sobre las rutas históricas del INI del VB6.
+            'caso tienen prioridad sobre las rutas históricas del INI del VB6,
+            'pero una carpeta vacía no es una fuente válida de recursos.
             Dim bundledPath As String = EnsureTrailingSeparator(Path.Combine(appPath, fallbackName))
-            If Directory.Exists(bundledPath) Then Return bundledPath
+            If DirectoryContainsFiles(bundledPath) Then Return bundledPath
 
             If Not String.IsNullOrWhiteSpace(legacyFallbackName) Then
                 Dim legacyBundledPath As String = EnsureTrailingSeparator(Path.Combine(appPath, legacyFallbackName))
-                If Directory.Exists(legacyBundledPath) Then Return legacyBundledPath
+                If DirectoryContainsFiles(legacyBundledPath) Then Return legacyBundledPath
             End If
 
             Dim resolved As String = AutoCompletaPath(configuredPath, appPath)
@@ -150,12 +151,45 @@ Namespace WorldEditorNet.Core
                 resolved = EnsureTrailingSeparator(Path.Combine(appPath, fallbackName))
             End If
 
+            If DirectoryContainsFiles(resolved) Then Return resolved
+
+            'Durante la depuración los recursos suelen estar en la raíz del
+            'proyecto, mientras que AppContext.BaseDirectory está bajo bin\Debug.
+            'Reproduce la búsqueda práctica del editor VB6 sin fijar una ruta
+            'absoluta y mantiene funcionando una instalación publicada.
+            Dim projectResourcePath As String = FindAncestorDirectory(appPath, fallbackName)
+            If String.IsNullOrWhiteSpace(projectResourcePath) AndAlso
+               Not String.IsNullOrWhiteSpace(legacyFallbackName) Then
+                projectResourcePath = FindAncestorDirectory(appPath, legacyFallbackName)
+            End If
+            If Not String.IsNullOrWhiteSpace(projectResourcePath) Then Return projectResourcePath
+
             If Not Directory.Exists(resolved) Then
                 Throw New DirectoryNotFoundException(
                     "El directorio configurado no existe: " & resolved)
             End If
 
             Return resolved
+        End Function
+
+        Private Shared Function DirectoryContainsFiles(ByVal path As String) As Boolean
+            If String.IsNullOrWhiteSpace(path) OrElse Not Directory.Exists(path) Then Return False
+            Return Directory.EnumerateFiles(path).Any()
+        End Function
+
+        Private Shared Function FindAncestorDirectory(ByVal appPath As String,
+                                                       ByVal directoryName As String) As String
+            If String.IsNullOrWhiteSpace(directoryName) Then Return String.Empty
+
+            Dim current As DirectoryInfo = New DirectoryInfo(Path.GetFullPath(appPath))
+            For level As Integer = 0 To 8
+                Dim candidate As String = Path.Combine(current.FullName, directoryName)
+                If DirectoryContainsFiles(candidate) Then Return EnsureTrailingSeparator(candidate)
+                If current.Parent Is Nothing Then Exit For
+                current = current.Parent
+            Next
+
+            Return String.Empty
         End Function
 
         Private Shared Sub NormalizeUserPosition(ByVal settings As WorldEditorSettings)

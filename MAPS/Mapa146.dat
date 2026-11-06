@@ -1,7 +1,14 @@
 [Mapa146]
-Name=Fuerte de Veril
-MusicNum=18-1
+Name=Océano
+MusicNum=12
 StartPos=0-0-0
 Terreno=BOSQUE
-Zona=DUNGEON
+Zona=CAMPO
 Restringir=No
+BackUp= 1
+MagiaSinefecto=0
+NoEncriptarMP=0
+Pk=0
+InviSinEfecto=0
+ResuSinEfecto=0
+SeCaenItems=1

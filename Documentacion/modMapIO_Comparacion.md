@@ -56,3 +56,59 @@ VB6. La compatibilidad binaria debe verificarse con archivos `.map`, `.inf` y
   conectadas a `MainForm`.
 - `WorldEditorNet.Tests` verifica el round-trip sintético sin modificar mapas
   reales.
+
+## Implementado en `MainForm.vb`
+
+- Al abrir un `.map`, se ejecuta la lógica equivalente a `Pestañas()` del
+  VB6: se toma el prefijo y número del mapa abierto y se buscan los mapas
+  vecinos desde `-4` hasta `+8`.
+- Los controles `MapPest1` a `MapPest13` se rellenan únicamente cuando existe
+  el archivo vecino; los demás quedan ocultos, deshabilitados y con el texto
+  `Nada`, como en el original.
+- Al guardar un mapa se vuelve a actualizar la misma lista de pestañas.
+- Al abrir el `.dat` asociado se cargan nombre, música y nivel mínimo; la
+  versión procede de la cabecera V1. Si no existe el `.dat`, se conservan los
+  valores predeterminados.
+- Al crear un mapa nuevo se limpian y ocultan las pestañas y se restauran los
+  datos iniciales del mapa.
+
+Al hacer clic sobre cada `MapPest` se construye la ruta con el mismo prefijo y
+número relativo del VB6 y se abre el mapa vecino, previa confirmación de los
+cambios sin guardar.
+
+## 05/11/2026 — Navegación del visor y radar
+
+- `MapSurfaceControl` conserva una posición de vista (`UserPos`) y dibuja la
+  ventana visible centrada en ella, en lugar de pintar siempre desde la celda
+  1,1.
+- Las flechas desplazan la vista una celda por pulsación y el clic izquierdo en
+  el radar cambia la posición visible, siguiendo el flujo de `CheckKeys` y
+  `picRadar_MouseDown` del VB6.
+- Las coordenadas mostradas sobre el visor se calculan con la posición de vista
+  real y mantienen el color rojo en los bordes del mapa.
+- El radar se reconstruye desde las celdas y el índice gráfico al crear, abrir,
+  editar o desplazar el mapa.
+- La posición de vista se toma de `WorldEditor.ini` y se guarda de nuevo al
+  cerrar el editor.
+
+Pendiente de verificación manual: comprobar con los mapas reales que el centro,
+los límites y la escala visual del radar coinciden exactamente con DirectDraw.
+
+## 05/11/2026 — Bloqueos y apuntador del radar
+
+- `ShowBlocked` ahora reproduce el render del VB6: cada celda bloqueada se marca
+  con un cuadrado rojo de 5x5 píxeles centrado, sin cubrir el tile completo.
+- El panel `Bloqueos`, el botón lateral `CBVerBloqueosT`, el botón `Ver
+  Bloqueos` y el menú `...Bloqueos` comparten el mismo estado.
+- Al seleccionar el panel `Bloqueos` se activa la visualización de bloqueos,
+  siguiendo la activación automática de `EstSelectPanel` del VB6.
+- El indicador del minimapa se dibuja como contorno blanco sobre la imagen del
+  radar; ya no se utiliza un panel relleno opaco.
+
+## 06/11/2026 — Recursos del render
+
+- Corregida la resolución de `Graficos.ind` y de los BMP cuando las carpetas
+  bajo `bin\Debug` existen pero todavía no contienen recursos.
+- La carga busca una carpeta de recursos válida en la raíz del proyecto durante
+  la depuración y mantiene la ruta junto al ejecutable para instalaciones
+  publicadas.

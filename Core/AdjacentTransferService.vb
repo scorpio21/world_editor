@@ -175,7 +175,7 @@ Namespace WorldEditorNet.Core
 
         Private Shared Sub ValidateLimits(options As AdjacentTransferOptions)
             If options.MinX < 1 OrElse options.MinY < 1 OrElse
-               options.MaxX > 100 OrElse options.MaxY > 100 OrElse
+               options.MaxX > 99 OrElse options.MaxY > 99 OrElse
                options.MinX >= options.MaxX OrElse options.MinY >= options.MaxY Then
                 Throw New ArgumentOutOfRangeException(NameOf(options), "Los límites deben estar dentro de 1..100.")
             End If

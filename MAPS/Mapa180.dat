@@ -1,7 +1,17 @@
 [Mapa180]
-Name=Bosques de IceBill
-StartPos=0-0-0
-Terreno=NIEVE
+Name=Océano
+MusicNum=12
+MagiaSinefecto=0
+NoEncriptarMP=0
+Terreno=BOSQUE
 Zona=CAMPO
 Restringir=No
-BackUp= 1
+BackUp= 0
+Pk=0
+InviSinEfecto=0
+ResuSinEfecto=0
+SeCaenItems=1
+InviSinEfecto=0
+ResuSinEfecto=0
+MinLevel=0
+PuedeMascotas=0

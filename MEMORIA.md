@@ -413,3 +413,96 @@ No se debe comenzar la conexión funcional completa hasta cerrar la issue #8.
   al iniciar sin mapa muestra `FPS: 0` en lugar de `FPS: ??`.
 - Build Debug verificado: 0 advertencias y 0 errores.
 
+## 05/11/2026 — Unión adyacente y pestañas de mapas
+
+- ✅ `UnionAdyacenteForm` aplica los cuatro bordes con los límites básicos del
+  VB6, lee los translados existentes y habilita `Aplicar` solo con un borde
+  seleccionado.
+- ✅ Se validan mapas `0..1024` y límites `1..99`; las celdas bloqueadas se
+  conservan sin cambios.
+- ✅ `MapPest1..MapPest13` se rellenan al abrir/guardar y ahora abren el mapa
+  vecino correspondiente al hacer clic, respetando `MapPest_Click` del VB6.
+- ✅ Documentación actualizada en `Documentacion/modMapIO_Comparacion.md` y
+  `Documentacion/Inventario_frmMain_Controles.md`.
+- ✅ Build verificado:
+  `dotnet build K:\AO_Aospain\utilidades\WorldEditor\WorldEditorNet\WorldEditorNet.vbproj --configuration Debug --no-restore`
+  — 0 advertencias, 0 errores.
+- ⚠️ Los perfiles VB6 `Legal` y `Ulla` aún no tienen menú en el diseñador;
+  no se han inventado controles para ellos.
+
+## 05/11/2026 — Navegación del mapa
+
+- ✅ Vista centrada en `UserPos` y navegación con las cuatro flechas.
+- ✅ Clic en el minimapa reposiciona el visor y actualiza el apuntador.
+- ✅ Coordenadas del ratón usan la celda real del mapa y el contador FPS sigue
+  funcionando mediante los repintados del visor.
+- ✅ Radar reconstruido desde el documento cargado.
+- ⚠️ Falta comparar visualmente la escala final del radar y el encuadre contra
+  DirectDraw usando un mapa real.
+
+## 05/11/2026 — Bloqueos y apuntador del radar
+
+- ✅ Corregido el render de bloqueos: marca roja de 5x5 centrada por celda,
+  equivalente a `BMPSurface.DrawBox` del VB6.
+- ✅ Sincronizados `Bloqueos`, `CBVerBloqueosT`, `Ver Bloqueos` y el menú
+  `...Bloqueos`.
+- ✅ El apuntador del minimapa se pinta como contorno transparente sobre el
+  bitmap del radar.
+- ✅ Build Debug: 0 advertencias y 0 errores.
+
+## 06/11/2026 — Resolución de recursos gráficos
+
+- ✅ Corregida la selección de carpetas de `Graficos` e `INIT` cuando las
+  carpetas creadas bajo `bin\Debug` existen pero están vacías.
+- ✅ Durante la depuración se buscan los recursos en las carpetas ascendientes
+  del proyecto, sin fijar rutas absolutas.
+- ✅ `Graficos.ind` y los BMP del mapa vuelven a resolverse desde la misma
+  raíz de recursos; se evita el texto de reserva con números cuando hay
+  gráficos disponibles.
+- ✅ Build Debug y pruebas smoke: correctos.
+- ✅ El proyecto copia íntegramente `Datos`, `INIT` y `DATS` al directorio de
+  salida en cada compilación.
+
+## 06/11/2026 — Configuración inicial de rutas
+
+- ✅ Si `Graficos`, `DATS`, `INIT` o `MIDI` no son válidos, el arranque solicita
+  cada carpeta mediante el selector estándar de Windows.
+- ✅ Las rutas elegidas se guardan en `Datos\WorldEditor.ini`, sección `[PATH]`,
+  usando las claves `DirGraficos`, `DirDats`, `DirIndex` y `DirMidi`.
+- ✅ Si el INI no existe pero las carpetas incluidas junto al ejecutable son
+  válidas, se crea automáticamente con esas rutas.
+- ⚠️ Si el usuario cancela la selección o elige una carpeta sin los recursos
+  mínimos, el editor continúa abierto y muestra configuración pendiente; no se
+  inventan rutas absolutas.
+
+## 06/11/2026 — Escala de GRH en el render
+
+- ✅ `MapSurfaceControl.DrawGraphic` deja de forzar todos los GRH a una celda
+  de 32×32.
+- ✅ Las superficies de la primera capa conservan su tamaño real
+  (`pixelWidth`/`pixelHeight`), como el `BltFast` del VB6.
+- ✅ Las capas superiores aplican el centrado vertical y horizontal del VB6,
+  equivalente a `DDrawTransGrhtoSurface(..., Center=1)`.
+- ✅ Build Debug: 0 advertencias y 0 errores.
+- ✅ Los objetos del mapa se reconstruyen desde `OBJ.dat` usando su
+  `GrhIndex` y se dibujan con el tamaño real del GRH, centrados como en
+  `DDrawTransGrhtoSurface(..., Center=1)` del VB6.
+- ✅ `Personajes.ind` y `Cabezas.ind` se cargan con el formato binario exacto
+  del VB6: cabecera de 263 bytes, contador y registros de 12/8 bytes.
+- ✅ Los NPCs se reconstruyen desde `NPCs.dat`, `Personajes.ind` y
+  `Cabezas.ind`, respetando dirección, GRH del cuerpo, GRH de cabeza y
+  `HeadOffset`.
+- ✅ El marcador textual `N123` solo se muestra cuando el NPC no puede
+  renderizarse por datos incompletos o inválidos.
+- ⚠️ Falta comprobar visualmente en ejecución la escala y posición de algunos
+  NPCs altos sobre un mapa real frente al DirectDraw original.
+
+## 06/11/2026 — Render de NPCs
+
+- ✅ Añadidos `LoadBodies` y `LoadHeads` en `LegacyIndicesLoader`.
+- ✅ Se validan tamaños binarios para evitar leer registros desalineados.
+- ✅ `MapSurfaceControl` dibuja primero el cuerpo y después la cabeza con el
+  desplazamiento definido por `Personajes.ind`.
+- ✅ Debug y Release compilan sin advertencias ni errores.
+- ✅ Smoke test de `MapV1Codec`: correcto.
+

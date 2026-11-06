@@ -101,6 +101,88 @@ Namespace WorldEditorNet.Core
             Return result
         End Function
 
+        ''' <summary>
+        ''' Carga INIT\Personajes.ind con el formato binario original de VB6:
+        ''' String * 255 + Long CRC + Long MagicWord + Integer NumBodies,
+        ''' seguido de cuatro GRH y dos offsets Integer por cuerpo.
+        ''' </summary>
+        Public Shared Function LoadBodies(ByVal indexDirectory As String) As tBodyData()
+            Dim filePath As String = Path.Combine(indexDirectory, "Personajes.ind")
+            EnsureFileExists(filePath, "Personajes.ind")
+
+            Using stream As FileStream = File.OpenRead(filePath)
+                Using reader As New BinaryReader(stream)
+                    ValidateBinaryHeader(stream, filePath)
+                    Dim count As Integer = reader.ReadInt16()
+                    If count < 0 Then Throw New InvalidDataException("Personajes.ind contiene un número de cuerpos inválido.")
+                    ValidateRecordLength(stream, filePath, count, 12)
+
+                    Dim result(count + 1) As tBodyData
+                    For index As Integer = 1 To count
+                        Dim walk(4) As Grh
+                        For direction As Integer = 1 To 4
+                            walk(direction) = NewGrh(reader.ReadInt16())
+                        Next
+                        result(index).Walk = walk
+                        result(index).HeadOffset = New Position With {
+                            .X = reader.ReadInt16(),
+                            .Y = reader.ReadInt16()}
+                    Next
+                    Return result
+                End Using
+            End Using
+        End Function
+
+        ''' <summary>
+        ''' Carga INIT\Cabezas.ind con el formato binario original de VB6:
+        ''' cabecera de 263 bytes, contador Integer y cuatro GRH por cabeza.
+        ''' </summary>
+        Public Shared Function LoadHeads(ByVal indexDirectory As String) As tHeadData()
+            Dim filePath As String = Path.Combine(indexDirectory, "Cabezas.ind")
+            EnsureFileExists(filePath, "Cabezas.ind")
+
+            Using stream As FileStream = File.OpenRead(filePath)
+                Using reader As New BinaryReader(stream)
+                    ValidateBinaryHeader(stream, filePath)
+                    Dim count As Integer = reader.ReadInt16()
+                    If count < 0 Then Throw New InvalidDataException("Cabezas.ind contiene un número de cabezas inválido.")
+                    ValidateRecordLength(stream, filePath, count, 8)
+
+                    Dim result(count + 1) As tHeadData
+                    For index As Integer = 1 To count
+                        Dim head(4) As Grh
+                        For direction As Integer = 1 To 4
+                            head(direction) = NewGrh(reader.ReadInt16())
+                        Next
+                        result(index).Head = head
+                    Next
+                    Return result
+                End Using
+            End Using
+        End Function
+
+        Private Shared Function NewGrh(ByVal grhIndex As Short) As Grh
+            Return New Grh With {.GrhIndex = grhIndex, .FrameCounter = 1}
+        End Function
+
+        Private Shared Sub ValidateBinaryHeader(ByVal stream As FileStream, ByVal filePath As String)
+            If stream.Length < 265 Then
+                Throw New InvalidDataException(Path.GetFileName(filePath) & " no contiene una cabecera completa.")
+            End If
+            stream.Position = 263
+        End Sub
+
+        Private Shared Sub ValidateRecordLength(ByVal stream As FileStream,
+                                                 ByVal filePath As String,
+                                                 ByVal count As Integer,
+                                                 ByVal recordSize As Integer)
+            Dim expected As Long = 265L + (CLng(count) * recordSize)
+            If stream.Length <> expected Then
+                Throw New InvalidDataException(Path.GetFileName(filePath) &
+                                                " tiene una longitud incompatible con su formato VB6.")
+            End If
+        End Sub
+
         Private Shared Function ReadNpc(ByVal reader As clsIniReader, ByVal index As Integer) As NpcData
             Return New NpcData With {
                 .Name = reader.GetValue("NPC" & index, "Name"),
