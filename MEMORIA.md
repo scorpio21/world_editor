@@ -536,3 +536,10 @@ No se debe comenzar la conexión funcional completa hasta cerrar la issue #8.
 - ✅ Se mantienen las posiciones y el tamaño original de 50×17 píxeles.
 - ✅ Compilación Debug correcta, sin advertencias ni errores.
 
+## 09/11/2026 — Indicadores de translado
+
+- ✅ Los translados ya no se muestran como texto (`E16`, `E17`, etc.).
+- ✅ El render utiliza el gráfico especial 1 de `Graficos\0.bmp`, igual que
+  `modRenderer.RenderScreen` del VB6 para `TileExit.Map <> 0`.
+- ✅ Se mantiene la visibilidad controlada por `CBVerTraslados`/`ShowTranslados`.
+

@@ -887,8 +887,10 @@ Namespace WorldEditorNet
                 markerY += Font.Height
             End If
             If _showTranslados AndAlso cell.ExitMap <> 0 Then
-                DrawMarker(graphics, "E" & cell.ExitMap, left + 2, markerY, Color.DarkMagenta)
-                markerY += Font.Height
+                ' VB6: modRenderer dibuja los translados con el gráfico especial
+                ' 1, almacenado en Graficos\0.bmp. No se debe pintar el número
+                ' del mapa como texto (por ejemplo, "E16").
+                DrawSpecialGraphic(graphics, 1, left, top)
             End If
             If _showTriggers AndAlso cell.Trigger <> 0 Then
                 DrawMarker(graphics, "T" & cell.Trigger, left + 2, markerY, Color.Red)
