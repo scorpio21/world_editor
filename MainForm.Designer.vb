@@ -1059,7 +1059,7 @@ Partial Class MainForm
             ' 
             mapSurface.BackColor = Color.White
             mapSurface.BrushEnabled = False
-            mapSurface.CellSize = 24
+            mapSurface.CellSize = 32
             mapSurface.Document = Nothing
             mapSurface.GraphicsDirectory = ""
             mapSurface.GraphicsIndex = Nothing

@@ -506,3 +506,33 @@ No se debe comenzar la conexión funcional completa hasta cerrar la issue #8.
 - ✅ Debug y Release compilan sin advertencias ni errores.
 - ✅ Smoke test de `MapV1Codec`: correcto.
 
+## 06/11/2026 — Transparencia y orden de objetos
+
+- ✅ Aplicada la clave de color heredada del VB6: el negro de los BMP se
+  convierte en transparente al cargar las superficies, equivalente a
+  `SetColorKey(DDCKEY_SRCBLT)` y `DDBLTFAST_SRCCOLORKEY`.
+- ✅ Corregido el orden de composición del mapa: capas 1-2, objetos, NPCs,
+  capa 3 y capa 4, igual que `RenderScreen` del original.
+- ✅ Los objetos siguen usando el `GrhIndex` de `OBJ.dat`, tamaño real del GRH
+  y centrado compatible con `DDrawTransGrhtoSurface`.
+- ✅ Debug y Release compilados sin advertencias ni errores.
+- ⚠️ Falta una comprobación visual del mapa real en ejecución para validar los
+  BMP concretos del usuario después de esta corrección.
+
+## 06/11/2026 — Escala de baldosa y cuadrícula
+
+- ✅ Corregida la celda del visor de 24×24 a 32×32 píxeles, que es la medida
+  usada por `RenderScreen` en VB6. Esto corrige la separación y el tamaño
+  aparente de casas y objetos.
+- ✅ `CBVerCuadricula` ahora alterna la cuadrícula del render, igual que
+  `DDrawSpecialToSurface(..., 17, ...)` cuando `CBVerCuadricula.Value = True`.
+- ✅ El menú `Ver → Grilla` y el botón lateral mantienen el mismo estado.
+- ✅ Debug y Release compilados sin advertencias ni errores.
+
+## 09/11/2026 — Etiquetas de mapas vecinos
+
+- ✅ Las pestañas `MapPest` conservan la fuente Arial 8,25 del VB6 para mostrar
+  correctamente `Mapa10`, `Mapa11`, etc., sin recortar el último dígito.
+- ✅ Se mantienen las posiciones y el tamaño original de 50×17 píxeles.
+- ✅ Compilación Debug correcta, sin advertencias ni errores.
+

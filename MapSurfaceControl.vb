@@ -11,7 +11,10 @@ Namespace WorldEditorNet
         Inherits Control
 
         Private _document As MapV1Document
-        Private _cellSize As Integer = 24
+        ' El cliente VB6 trabaja con baldosas de 32x32 píxeles.
+        ' Mantener 32 aquí es necesario para que el anclaje de casas,
+        ' objetos y la cuadrícula coincida con RenderScreen.
+        Private _cellSize As Integer = 32
         Private _selectedX As Integer
         Private _selectedY As Integer
         Private _undoX As Integer
@@ -750,81 +753,116 @@ Namespace WorldEditorNet
                 Return
             End If
 
-            Using gridPen As New Pen(Color.LightGray)
             Using blockedBrush As New SolidBrush(Color.Red)
                     Using selectedBrush As New SolidBrush(Color.FromArgb(120, Color.Gold))
-                        Dim visibleColumns As Integer = Math.Max(1, ParentClientWidth() \ _cellSize)
-                        Dim visibleRows As Integer = Math.Max(1, ParentClientHeight() \ _cellSize)
-                        Dim firstX As Integer = Math.Max(1, _viewportX - visibleColumns \ 2)
-                        Dim firstY As Integer = Math.Max(1, _viewportY - visibleRows \ 2)
-                        Dim lastX As Integer = Math.Min(100, firstX + visibleColumns)
-                        Dim lastY As Integer = Math.Min(100, firstY + visibleRows)
+                        Dim visibleColumns As Integer = Math.Max(1, ClientSize.Width \ _cellSize)
+                        Dim visibleRows As Integer = Math.Max(1, ClientSize.Height \ _cellSize)
 
-                        For y As Integer = firstY To lastY
-                            For x As Integer = firstX To lastX
-                                Dim left As Integer = (x - firstX) * _cellSize
-                                Dim top As Integer = (y - firstY) * _cellSize
-                                Dim cellRect As New Rectangle(left, top, _cellSize, _cellSize)
+                        ' RenderScreen del VB6 dibuja TileBufferSize celdas fuera
+                        ' de la vista y después presenta solo el rectángulo visible.
+                        ' Es imprescindible para que los GRH grandes no se corten
+                        ' cuando su celda ancla está junto al borde.
+                        Const tileBufferSize As Integer = 8
+                        Dim originX As Integer = _viewportX - (visibleColumns \ 2)
+                        Dim originY As Integer = _viewportY - (visibleRows \ 2)
+                        Dim firstX As Integer = Math.Max(1, originX - tileBufferSize)
+                        Dim firstY As Integer = Math.Max(1, originY - tileBufferSize)
+                        Dim lastX As Integer = Math.Min(100, originX + visibleColumns + tileBufferSize)
+                        Dim lastY As Integer = Math.Min(100, originY + visibleRows + tileBufferSize)
 
-                                Dim hasGraphic As Boolean = False
-                                If _document IsNot Nothing Then
+                        ' RenderScreen del VB6 no dibuja una celda completa de una
+                        ' vez. Hace pasadas globales para que una superficie grande
+                        ' no tape objetos o superficies de otra celda.
+                        If _document IsNot Nothing Then
+                            ' Pasada 1: capas de suelo y segunda capa.
+                            Dim surfaceDrawn As New HashSet(Of Integer)()
+                            For y As Integer = firstY To lastY
+                                For x As Integer = firstX To lastX
+                                    Dim left As Integer = (x - originX) * _cellSize
+                                    Dim top As Integer = (y - originY) * _cellSize
                                     Dim cell As MapV1Cell = _document.Cells(x, y)
                                     Dim yOffset As Integer = 2
-                                    If _showLayer1 AndAlso DrawGraphic(e.Graphics, cell.Graphic1, x, y, 1, left, top, yOffset) Then hasGraphic = True
-                                    If _showLayer2 AndAlso DrawGraphic(e.Graphics, cell.Graphic2, x, y, 2, left, top, yOffset) Then hasGraphic = True
-                                    If _showLayer3 AndAlso DrawGraphic(e.Graphics, cell.Graphic3, x, y, 3, left, top, yOffset) Then hasGraphic = True
-                                    If _showLayer4 AndAlso DrawGraphic(e.Graphics, cell.Graphic4, x, y, 4, left, top, yOffset) Then hasGraphic = True
+                                    If _showLayer1 AndAlso DrawGraphic(e.Graphics, cell.Graphic1, x, y, 1, left, top, yOffset) Then
+                                        surfaceDrawn.Add(y * 1000 + x)
+                                    End If
+                                    If _showLayer2 Then DrawGraphic(e.Graphics, cell.Graphic2, x, y, 2, left, top, yOffset)
+                                Next
+                            Next
 
-                                    ' VB6 reconstruye ObjGrh al cargar el mapa a
-                                    ' partir de OBJ.dat y lo dibuja centrado. El
-                                    ' mapa solo almacena el índice y la cantidad.
-                                    Dim objectDrawn As Boolean = False
+                            ' Pasada 2: objetos, NPCs y tercera capa.
+                            Dim objectDrawn As New HashSet(Of Integer)()
+                            Dim npcDrawn As New HashSet(Of Integer)()
+                            For y As Integer = firstY To lastY
+                                For x As Integer = firstX To lastX
+                                    Dim left As Integer = (x - originX) * _cellSize
+                                    Dim top As Integer = (y - originY) * _cellSize
+                                    Dim cell As MapV1Cell = _document.Cells(x, y)
+                                    Dim yOffset As Integer = 2
+                                    Dim cellKey As Integer = y * 1000 + x
+
                                     If _showObjects AndAlso cell.ObjIndex > 0 AndAlso
                                        LegacyDeclarations.ObjDataArray IsNot Nothing AndAlso
                                        cell.ObjIndex < LegacyDeclarations.ObjDataArray.Length Then
                                         Dim objectGrh As Short = LegacyDeclarations.ObjDataArray(cell.ObjIndex).GrhIndex
-                                        objectDrawn = DrawGraphic(e.Graphics, objectGrh, x, y, 5, left, top, yOffset)
+                                        If DrawGraphic(e.Graphics, objectGrh, x, y, 5, left, top, yOffset) Then
+                                            objectDrawn.Add(cellKey)
+                                        End If
                                     End If
 
-                                    ' VB6 dibuja el cuerpo del NPC y, si existe,
-                                    ' su cabeza sobre la misma celda. El índice
-                                    ' de dirección es 1=Norte, 2=Este, 3=Sur, 4=Oeste.
-                                    Dim npcDrawn As Boolean = False
                                     If _showNpcs AndAlso cell.NpcIndex > 0 AndAlso
                                        LegacyDeclarations.NpcDataArray IsNot Nothing AndAlso
-                                       cell.NpcIndex < LegacyDeclarations.NpcDataArray.Length Then
-                                        npcDrawn = DrawNpc(e.Graphics, LegacyDeclarations.NpcDataArray(cell.NpcIndex),
-                                                          x, y, left, top, yOffset)
+                                       cell.NpcIndex < LegacyDeclarations.NpcDataArray.Length AndAlso
+                                       DrawNpc(e.Graphics, LegacyDeclarations.NpcDataArray(cell.NpcIndex),
+                                               x, y, left, top, yOffset) Then
+                                        npcDrawn.Add(cellKey)
                                     End If
 
-                                    If Not hasGraphic AndAlso cell.Graphic1 <> 0 Then
+                                    If _showLayer3 Then DrawGraphic(e.Graphics, cell.Graphic3, x, y, 3, left, top, yOffset)
+                                Next
+                            Next
+
+                            ' Pasada 3: capa superior y elementos de edición.
+                            For y As Integer = firstY To lastY
+                                For x As Integer = firstX To lastX
+                                    Dim left As Integer = (x - originX) * _cellSize
+                                    Dim top As Integer = (y - originY) * _cellSize
+                                    Dim cellRect As New Rectangle(left, top, _cellSize, _cellSize)
+                                    Dim cell As MapV1Cell = _document.Cells(x, y)
+                                    Dim yOffset As Integer = 2
+                                    Dim cellKey As Integer = y * 1000 + x
+                                    If _showLayer4 Then DrawGraphic(e.Graphics, cell.Graphic4, x, y, 4, left, top, yOffset)
+
+                                    If Not surfaceDrawn.Contains(cellKey) AndAlso cell.Graphic1 <> 0 Then
                                         TextRenderer.DrawText(e.Graphics, cell.Graphic1.ToString(), Font,
                                                                New Point(left + 2, top + 2), Color.Black,
                                                                TextFormatFlags.NoPadding)
                                     End If
+                                    DrawMetadataMarkers(e.Graphics, cell, left, top,
+                                                        objectDrawn.Contains(cellKey), npcDrawn.Contains(cellKey))
 
-                                    DrawMetadataMarkers(e.Graphics, cell, left, top, objectDrawn, npcDrawn)
-                                End If
+                                    If _showBlocked AndAlso cell.Blocked <> 0 Then
+                                        ' VB6: DrawBox(celda + 16, celda + 16, celda + 21, celda + 21).
+                                        Dim markerSize As Integer = Math.Min(5, Math.Max(1, _cellSize))
+                                        Dim markerOffset As Integer = Math.Min(16, Math.Max(0, _cellSize - markerSize))
+                                        e.Graphics.FillRectangle(blockedBrush,
+                                                                  cellRect.Left + markerOffset,
+                                                                  cellRect.Top + markerOffset,
+                                                                  markerSize, markerSize)
+                                    End If
+                                    If x = _selectedX AndAlso y = _selectedY Then
+                                        e.Graphics.FillRectangle(selectedBrush, cellRect)
+                                    End If
 
-                                If _showBlocked AndAlso _document IsNot Nothing AndAlso _document.Cells(x, y).Blocked <> 0 Then
-                                    ' VB6: DrawBox(celda + 16, celda + 16, celda + 21, celda + 21).
-                                    Dim markerSize As Integer = Math.Min(5, Math.Max(1, _cellSize))
-                                    Dim markerOffset As Integer = Math.Min(16, Math.Max(0, _cellSize - markerSize))
-                                    e.Graphics.FillRectangle(blockedBrush,
-                                                              cellRect.Left + markerOffset,
-                                                              cellRect.Top + markerOffset,
-                                                              markerSize, markerSize)
-                                End If
-                                If x = _selectedX AndAlso y = _selectedY Then
-                                    e.Graphics.FillRectangle(selectedBrush, cellRect)
-                                End If
-
-                                If _showGrid Then e.Graphics.DrawRectangle(gridPen, cellRect)
+                                    If _showGrid Then
+                                        ' VB6: DDrawSpecialToSurface(..., 17, ...).
+                                        ' El gráfico 17 es el recorte 17 del atlas Graficos\0.bmp.
+                                        DrawSpecialGraphic(e.Graphics, 17, left, top)
+                                    End If
+                                Next
                             Next
-                        Next
+                        End If
                     End Using
                 End Using
-            End Using
             DrawCursorCoordinates(e.Graphics)
             RaiseEvent FrameRendered(Me, EventArgs.Empty)
         End Sub
@@ -924,6 +962,23 @@ Namespace WorldEditorNet
             Return True
         End Function
 
+        Private Sub DrawSpecialGraphic(graphics As Graphics, specialNumber As Integer,
+                                       left As Integer, top As Integer)
+            If specialNumber <= 0 OrElse String.IsNullOrWhiteSpace(_graphicsDirectory) Then Return
+
+            Dim atlas As Bitmap = GetBitmap(0)
+            If atlas Is Nothing Then Return
+
+            Dim sourceLeft As Integer = (specialNumber - 1) * _cellSize
+            If sourceLeft < 0 OrElse sourceLeft + _cellSize > atlas.Width OrElse
+               _cellSize > atlas.Height Then Return
+
+            graphics.DrawImage(atlas,
+                               New Rectangle(left, top, _cellSize, _cellSize),
+                               New Rectangle(sourceLeft, 0, _cellSize, _cellSize),
+                               GraphicsUnit.Pixel)
+        End Sub
+
         Private Function GetAnimationState(key As Integer, graphic As Integer) As AnimationState
             Dim state As AnimationState = Nothing
             If Not _animationStates.TryGetValue(key, state) OrElse state.GrhIndex <> graphic Then
@@ -974,6 +1029,11 @@ Namespace WorldEditorNet
             Try
                 Using source As Image = Image.FromFile(filePath)
                     Dim bitmap As New Bitmap(source)
+                    ' DirectDraw del cliente VB6 carga las superficies con
+                    ' SetColorKey(DDCKEY_SRCBLT) usando el color 0. En los
+                    ' BMP de AO ese color es negro; debe quedar transparente
+                    ' al componer el GRH sobre el mapa.
+                    bitmap.MakeTransparent(Color.Black)
                     _bitmapCache(fileNumber) = bitmap
                     Return bitmap
                 End Using

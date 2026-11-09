@@ -2,6 +2,7 @@ Imports WorldEditorNet.WorldEditorNet.Core
 Imports System.Drawing
 Imports System.IO
 Imports System.Linq
+Imports System.Runtime.InteropServices
 Imports System.Windows.Forms
 
 Namespace WorldEditorNet
@@ -52,8 +53,14 @@ Namespace WorldEditorNet
         Private _mapLoaded As Boolean
         Private ReadOnly _mapTabPaths As String() = New String(12) {}
         Private ReadOnly _fpsTimer As New Timer With {.Interval = 1000}
+        ' Equivalente al sondeo CheckKeys de modGeneral.bas.
+        Private ReadOnly _movementTimer As New Timer With {.Interval = 50}
         Private _framesThisSecond As Integer
         Private ReadOnly _loadingForm As frmCargando
+
+        <DllImport("user32.dll")>
+        Private Shared Function GetKeyState(ByVal virtualKey As Integer) As Short
+        End Function
 
         Public Sub New(Optional loadingForm As frmCargando = Nothing)
             _loadingForm = loadingForm
@@ -198,20 +205,12 @@ Namespace WorldEditorNet
                     SelectPanelMode(6, "Trigger's")
                 Case Keys.Up
                     If Not _mapLoaded Then Return
-                    mapSurface.MoveViewport(0, -1)
-                    RefreshRadar()
                 Case Keys.Right
                     If Not _mapLoaded Then Return
-                    mapSurface.MoveViewport(1, 0)
-                    RefreshRadar()
                 Case Keys.Down
                     If Not _mapLoaded Then Return
-                    mapSurface.MoveViewport(0, 1)
-                    RefreshRadar()
                 Case Keys.Left
                     If Not _mapLoaded Then Return
-                    mapSurface.MoveViewport(-1, 0)
-                    RefreshRadar()
                 Case Else
                     Return
             End Select
@@ -220,8 +219,15 @@ Namespace WorldEditorNet
             e.SuppressKeyPress = True
         End Sub
 
+        Private Sub MainForm_FormClosed(sender As Object, e As FormClosedEventArgs) Handles MyBase.FormClosed
+            _movementTimer.Stop()
+            RemoveHandler _movementTimer.Tick, AddressOf MovementTimer_Tick
+            _movementTimer.Dispose()
+        End Sub
+
         Private Sub MainForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
             Try
+                ConfigureMapTabLabels()
                 _loadingForm?.SetLoadingStep(0, "Cargando configuración...")
                 LoadSettings()
                 _loadingForm?.SetLoadingStep(1, "Cargando índices de superficies...")
@@ -234,6 +240,8 @@ Namespace WorldEditorNet
                 RefreshRadar()
                 AddHandler _fpsTimer.Tick, AddressOf FpsTimer_Tick
                 _fpsTimer.Start()
+                AddHandler _movementTimer.Tick, AddressOf MovementTimer_Tick
+                _movementTimer.Start()
                 radarPictureBox.SendToBack()
                 Shape1.SendToBack()
                 ' El indicador se pinta sobre la imagen del radar para que el
@@ -248,6 +256,18 @@ Namespace WorldEditorNet
             End Try
         End Sub
 
+        'MapPest usaba Arial 8,25 en el formulario VB6. Mantener esa fuente
+        'evita que Mapa10, Mapa11, etc. se recorten dentro de las etiquetas de
+        '50 píxeles que conserva el diseño original.
+        Private Sub ConfigureMapTabLabels()
+            Dim mapTabs As Label() = GetMapTabLabels()
+            For Each mapTab As Label In mapTabs
+                mapTab.Font = New Font("Arial", 8.25F, FontStyle.Regular)
+                mapTab.Padding = New Padding(0)
+                mapTab.AutoEllipsis = False
+            Next
+        End Sub
+
         Private Sub MapSurface_FrameRendered(sender As Object, e As EventArgs) Handles mapSurface.FrameRendered
             _framesThisSecond += 1
         End Sub
@@ -255,6 +275,30 @@ Namespace WorldEditorNet
         Private Sub FpsTimer_Tick(sender As Object, e As EventArgs)
             FPS.Text = $"FPS: {_framesThisSecond}"
             _framesThisSecond = 0
+        End Sub
+
+        Private Sub MovementTimer_Tick(sender As Object, e As EventArgs)
+            If Not _mapLoaded OrElse Not ContainsFocus Then Return
+
+            ' CheckKeys de VB6 comprueba Up, Right, Down y Left en este orden
+            ' y mueve una sola casilla por iteración.
+            Dim deltaX As Integer = 0
+            Dim deltaY As Integer = 0
+
+            If GetKeyState(CInt(Keys.Up)) < 0 Then
+                deltaY = -1
+            ElseIf GetKeyState(CInt(Keys.Right)) < 0 Then
+                deltaX = 1
+            ElseIf GetKeyState(CInt(Keys.Down)) < 0 Then
+                deltaY = 1
+            ElseIf GetKeyState(CInt(Keys.Left)) < 0 Then
+                deltaX = -1
+            Else
+                Return
+            End If
+
+            mapSurface.MoveViewport(deltaX, deltaY)
+            RefreshRadar()
         End Sub
 
         Private Sub MapSurface_MouseMove(sender As Object, e As MouseEventArgs) _
@@ -1371,7 +1415,7 @@ Namespace WorldEditorNet
         End Sub
 
         Private Sub GridMenuItem_Click(sender As Object, e As EventArgs) Handles gridMenuItem.Click
-            ToggleViewItem(gridMenuItem, Sub(value) mapSurface.ShowGrid = value)
+            SetGridVisibility(Not mapSurface.ShowGrid)
         End Sub
 
         Private Sub NpcsMenuItem_Click(sender As Object, e As EventArgs) Handles npcsMenuItem.Click
@@ -1392,6 +1436,11 @@ Namespace WorldEditorNet
 
         ' Equivalentes de los eventos explícitos del frmMain.frm original.
         ' CBVerCuadricula y CBVerBloqueosA no tenían procedimiento Click en VB6.
+        ' El botón de cuadrícula representa el mismo estado que ...Grilla del menú Ver.
+        Private Sub CBVerCuadricula_Click(sender As Object, e As EventArgs) Handles CBVerCuadricula.Click
+            SetGridVisibility(Not mapSurface.ShowGrid)
+        End Sub
+
         Private Sub CBVerBloqueosT_Click(sender As Object, e As EventArgs) Handles CBVerBloqueosT.Click
             SetBlockedVisibility(Not mapSurface.ShowBlocked)
         End Sub
@@ -1431,6 +1480,12 @@ Namespace WorldEditorNet
             blockedMenuItem.Checked = value
             mapSurface.ShowBlocked = value
             CBVerBloqueosT.BackColor = If(value, Color.LightGreen, SystemColors.Control)
+        End Sub
+
+        Private Sub SetGridVisibility(value As Boolean)
+            gridMenuItem.Checked = value
+            mapSurface.ShowGrid = value
+            CBVerCuadricula.BackColor = If(value, Color.LightGreen, SystemColors.Control)
         End Sub
 
         Private Sub MapSurface_CellSelected(sender As Object, e As EventArgs) Handles mapSurface.CellSelected
@@ -1523,19 +1578,40 @@ Namespace WorldEditorNet
             Dim tabLabels As Label() = GetMapTabLabels()
             For relative As Integer = -4 To 8
                 Dim candidateNumber As Integer = mapNumber + relative
-                If candidateNumber < 0 Then Continue For
-
-                Dim candidatePath As String = Path.Combine(
-                    Path.GetDirectoryName(mapPath), mapPrefix & candidateNumber & ".map")
                 Dim tabIndex As Integer = relative + 4
-                If File.Exists(candidatePath) Then
-                    _mapTabPaths(tabIndex) = candidatePath
-                    tabLabels(tabIndex).Text = mapPrefix & candidateNumber
-                    tabLabels(tabIndex).Visible = True
-                    tabLabels(tabIndex).Enabled = True
+                Dim candidatePath As String = String.Empty
+
+                If candidateNumber >= 0 Then
+                    candidatePath = FindMapPath(
+                        Path.GetDirectoryName(mapPath), mapPrefix, candidateNumber)
                 End If
+
+                Dim exists As Boolean = Not String.IsNullOrWhiteSpace(candidatePath)
+                _mapTabPaths(tabIndex) = If(exists, candidatePath, String.Empty)
+                tabLabels(tabIndex).Text = If(exists, mapPrefix & candidateNumber, "Nada")
+                tabLabels(tabIndex).Visible = exists
+                tabLabels(tabIndex).Enabled = exists
+                tabLabels(tabIndex).BackColor = If(exists AndAlso tabIndex = 4,
+                                                   Color.FromArgb(128, 255, 128),
+                                                   Color.White)
             Next
         End Sub
+
+        Private Function FindMapPath(ByVal folderPath As String,
+                                     ByVal prefix As String,
+                                     ByVal number As Integer) As String
+            If String.IsNullOrWhiteSpace(folderPath) OrElse Not IO.Directory.Exists(folderPath) Then
+                Return String.Empty
+            End If
+
+            Dim mapName As String = prefix & number & ".map"
+            Dim directPath As String = Path.Combine(folderPath, mapName)
+            If File.Exists(directPath) Then Return directPath
+
+            Return IO.Directory.EnumerateFiles(folderPath, "*.map").FirstOrDefault(
+                Function(candidate) String.Equals(
+                    Path.GetFileName(candidate), mapName, StringComparison.OrdinalIgnoreCase))
+        End Function
 
         Private Sub ResetMapTabs()
             Dim tabLabels As Label() = GetMapTabLabels()
@@ -1545,6 +1621,7 @@ Namespace WorldEditorNet
                 tab.Text = "Nada"
                 tab.Visible = False
                 tab.Enabled = False
+                tab.BackColor = Color.White
             Next
         End Sub
 
