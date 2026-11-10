@@ -13,6 +13,7 @@ Namespace WorldEditorNet
         Private _settings As WorldEditorSettings
         Private _graphicsIndex As GraficosIndReader
         Private _surfaceSettings As New SurfacePatternSettings()
+        Private ReadOnly _filteredSurfaceIndices As New List(Of Integer)()
         Private _startupMessage As String = String.Empty
 
         Private Enum SurfaceEditMode
@@ -65,6 +66,7 @@ Namespace WorldEditorNet
         Public Sub New(Optional loadingForm As frmCargando = Nothing)
             _loadingForm = loadingForm
             InitializeComponent()
+            PreviewGrh.BackColor = Color.Black
             ClearFunctionsButton_Click(clearFunctionsButton, EventArgs.Empty)
         End Sub
 
@@ -142,6 +144,10 @@ Namespace WorldEditorNet
             If index <> 1 Then SetTransferEditMode(TransferEditMode.None)
 
             If surfaceControlsVisible Then
+                'El panel de superficies ocupa todo el contenedor; los botones deben quedar delante.
+                removeSurfaceLayerButton.BringToFront()
+                removeSurfaceAllLayersButton.BringToFront()
+                selectSurfaceButton.BringToFront()
                 StatTxt.Location = New Point(16, 672)
                 StatTxt.Size = New Size(290, 37)
             Else
@@ -303,8 +309,10 @@ Namespace WorldEditorNet
 
         Private Sub MapSurface_MouseMove(sender As Object, e As MouseEventArgs) _
             Handles mapSurface.MouseMove
-            Dim x As Integer = mapSurface.ViewportX - (ParentVisibleColumns() \ 2) + (e.X \ mapSurface.CellSize)
-            Dim y As Integer = mapSurface.ViewportY - (ParentVisibleRows() \ 2) + (e.Y \ mapSurface.CellSize)
+            Dim firstX As Integer = Math.Max(1, mapSurface.ViewportX - (ParentVisibleColumns() \ 2))
+            Dim firstY As Integer = Math.Max(1, mapSurface.ViewportY - (ParentVisibleRows() \ 2))
+            Dim x As Integer = firstX + (e.X \ mapSurface.CellSize)
+            Dim y As Integer = firstY + (e.Y \ mapSurface.CellSize)
             If x >= 1 AndAlso x <= 100 AndAlso y >= 1 AndAlso y <= 100 Then
                 POSX.Text = $"X: {x} - Y: {y}"
                 If x < 10 OrElse y < 10 OrElse x > 90 OrElse y > 90 Then
@@ -371,11 +379,9 @@ Namespace WorldEditorNet
                 LegacyDeclarations.SupDataArray = LegacyIndicesLoader.LoadSurfaces(dataDirectory)
                 LegacyDeclarations.MaxSup = CShort(Math.Min(LegacyDeclarations.SupDataArray.Length - 1, Short.MaxValue))
 
-                surfaceListBox.Items.Clear()
-                For index As Integer = 0 To LegacyDeclarations.SupDataArray.Length - 1
-                    Dim surface As SupData = LegacyDeclarations.SupDataArray(index)
-                    surfaceListBox.Items.Add(surface.Name & " - #" & index)
-                Next
+                surfaceFilterCombo.Text = String.Empty
+                layerCombo.SelectedIndex = 0
+                RefreshSurfaceList()
 
                 LegacyDeclarations.TriggerNames = LegacyIndicesLoader.LoadTriggers(dataDirectory)
                 LegacyDeclarations.NumTriggers = CShort(Math.Min(LegacyDeclarations.TriggerNames.Length, Short.MaxValue))
@@ -630,12 +636,15 @@ Namespace WorldEditorNet
         Private Sub SurfaceListBox_SelectedIndexChanged(sender As Object,
                                                          e As EventArgs) _
             Handles surfaceListBox.SelectedIndexChanged
-            Dim selectedIndex As Integer = surfaceListBox.SelectedIndex
-            If selectedIndex < 0 OrElse
-               selectedIndex >= LegacyDeclarations.SupDataArray.Length Then Return
+            Dim listIndex As Integer = surfaceListBox.SelectedIndex
+            If listIndex < 0 OrElse listIndex >= _filteredSurfaceIndices.Count Then Return
+            Dim selectedIndex As Integer = _filteredSurfaceIndices(listIndex)
 
             Dim surface As SupData = LegacyDeclarations.SupDataArray(selectedIndex)
             grhTextBox.Text = surface.Grh.ToString()
+            _surfaceSettings.Mosaic = surface.Width > 0 AndAlso surface.Height > 0
+            _surfaceSettings.Width = Math.Max(1, surface.Width)
+            _surfaceSettings.Height = Math.Max(1, surface.Height)
 
             If surface.Capa >= 1 AndAlso surface.Capa <= 4 Then
                 layerCombo.SelectedIndex = surface.Capa - 1
@@ -645,11 +654,35 @@ Namespace WorldEditorNet
             If surface.Block Then
                 statusLabel.Text &= " (bloqueada)"
             End If
+            UpdateSurfacePreview()
             PreviewGrh.Invalidate()
         End Sub
 
+        Private Sub SurfaceFilterCombo_TextChanged(sender As Object, e As EventArgs) _
+            Handles surfaceFilterCombo.TextChanged
+            If LegacyDeclarations.SupDataArray Is Nothing OrElse
+               LegacyDeclarations.SupDataArray.Length = 0 Then Return
+            RefreshSurfaceList()
+        End Sub
+
+        Private Sub RefreshSurfaceList()
+            _filteredSurfaceIndices.Clear()
+            surfaceListBox.Items.Clear()
+
+            Dim filter As String = surfaceFilterCombo.Text.Trim()
+            For index As Integer = 0 To LegacyDeclarations.SupDataArray.Length - 1
+                Dim surface As SupData = LegacyDeclarations.SupDataArray(index)
+                If filter.Length = 0 OrElse
+                   (surface.Name IsNot Nothing AndAlso
+                    surface.Name.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0) Then
+                    _filteredSurfaceIndices.Add(index)
+                    surfaceListBox.Items.Add(surface.Name & " - #" & index)
+                End If
+            Next
+        End Sub
+
         Private Sub PreviewGrh_Paint(sender As Object, e As PaintEventArgs) Handles PreviewGrh.Paint
-            e.Graphics.Clear(PreviewGrh.BackColor)
+            e.Graphics.Clear(Color.Black)
             Dim grh As Integer
             If Not Integer.TryParse(grhTextBox.Text, grh) OrElse grh <= 0 Then Return
 
@@ -831,6 +864,20 @@ Namespace WorldEditorNet
                                                      SystemColors.Highlight, SystemColors.Control)
             removeSurfaceAllLayersButton.BackColor = If(mode = SurfaceEditMode.RemoveLayersTwoAndThree,
                                                          SystemColors.Highlight, SystemColors.Control)
+            UpdateSurfacePreview()
+        End Sub
+
+        Private Sub UpdateSurfacePreview()
+            mapSurface.InsertPreviewEnabled = _surfaceMode = SurfaceEditMode.Insert
+            mapSurface.InsertPreviewLayer = layerCombo.SelectedIndex + 1
+            mapSurface.InsertPreviewSettings = _surfaceSettings
+            Dim grh As Integer
+            mapSurface.InsertPreviewGrh = If(Integer.TryParse(grhTextBox.Text, grh), grh, 0)
+        End Sub
+
+        Private Sub SurfacePreviewInputChanged(sender As Object, e As EventArgs) _
+            Handles grhTextBox.TextChanged, layerCombo.SelectedIndexChanged
+            UpdateSurfacePreview()
         End Sub
 
         Private Sub ApplySurfaceEditMode()
@@ -1007,7 +1054,12 @@ Namespace WorldEditorNet
 
         Private Sub NewMapMenuItem_Click(sender As Object, e As EventArgs) Handles newMapMenuItem.Click
             If Not ConfirmSaveChanges() Then Return
+
+            'Equivalente a frmMain.Dialog.FileName = Empty en mnuNuevoMapa_Click
+            'del VB6: el siguiente Abrir mapa debe empezar sin una selección previa.
+            openMapDialog.FileName = String.Empty
             CreateNewMap()
+            ShowMapInfoDialog()
         End Sub
 
         Private Sub OpenMapMenuItem_Click(sender As Object, e As EventArgs) Handles openMapMenuItem.Click
@@ -1100,6 +1152,7 @@ Namespace WorldEditorNet
             Try
                 Dim codec As New MapV1Codec()
                 codec.Save(_mapPath, _document)
+                MapInfo.Changed = 0
                 RefreshMapTabs(_mapPath)
                 UpdateMapStatus("Mapa guardado")
                 Return True
@@ -1111,7 +1164,7 @@ Namespace WorldEditorNet
         End Function
 
         Private Function ConfirmSaveChanges() As Boolean
-            If _document Is Nothing OrElse Not _document.Changed Then Return True
+            If _document Is Nothing OrElse (Not _document.Changed AndAlso MapInfo.Changed = 0) Then Return True
 
             Dim answer As DialogResult = MessageBox.Show(
                 Me,
@@ -1505,11 +1558,28 @@ Namespace WorldEditorNet
         End Sub
 
         Private Sub MapSurface_CellEdited(sender As Object, e As EventArgs) Handles mapSurface.CellEdited
+            MapInfo.Changed = 1
             UpdateMapStatus("Mapa modificado")
             RefreshRadar()
         End Sub
 
         Private Sub CreateNewMap()
+            MapInfo = New MapInfoRecord With {
+                .Music = "0",
+                .Name = "Nuevo Mapa",
+                .MapVersion = 0,
+                .Pk = True,
+                .SeCaenItems = False,
+                .MagiaSinEfecto = 0,
+                .MinLevel = 0,
+                .PuedeMascotas = 0,
+                .Terreno = "BOSQUE",
+                .Zona = "CAMPO",
+                .Restringir = "No",
+                .BackUp = 0,
+                .Changed = 0
+            }
+
             _document = New MapV1Document With {
                 .MapVersion = 0,
                 .Changed = False,
@@ -1529,9 +1599,11 @@ Namespace WorldEditorNet
             Next
 
             _mapPath = String.Empty
-            _mapLoaded = False
+            'modMapIO.NuevoMapa termina con MapaCargado = True y EngineRun = True.
+            'El mapa nuevo es una matriz válida de 100x100, no una vista sin mapa.
+            _mapLoaded = True
             mapSurface.Document = _document
-            mapSurface.EmptyMapView = True
+            mapSurface.EmptyMapView = False
             MainViewShp.BackColor = Color.Black
             MainViewShp.Enabled = True
             MainViewShp.Visible = True
@@ -1642,6 +1714,7 @@ Namespace WorldEditorNet
 
             Try
                 Dim info As MapInfoRecord = New MapInfoFile().Load(infoPath)
+                MapInfo = info
                 lblMapNombre.Text = If(String.IsNullOrWhiteSpace(info.Name),
                                        Path.GetFileNameWithoutExtension(mapPath), info.Name)
                 lblMapMusica.Text = If(String.IsNullOrWhiteSpace(info.Music), "0", info.Music)
@@ -1654,10 +1727,41 @@ Namespace WorldEditorNet
         End Sub
 
         Private Sub SetDefaultMapInfo()
+            If String.IsNullOrWhiteSpace(MapInfo.Name) Then
+                MapInfo = New MapInfoRecord With {
+                    .Music = "0",
+                    .Name = "Nuevo Mapa",
+                    .MapVersion = If(_document Is Nothing, CShort(0), _document.MapVersion),
+                    .Pk = True,
+                    .Terreno = "BOSQUE",
+                    .Zona = "CAMPO",
+                    .Restringir = "No"
+                }
+            End If
+
             lblMapNombre.Text = "Nuevo Mapa"
             lblMapMusica.Text = "0"
             lblMapVersion.Text = If(_document Is Nothing, "0", _document.MapVersion.ToString())
             lblMapNivelMin.Text = "0"
+        End Sub
+
+        Private Sub ShowMapInfoDialog()
+            Using dialog As New frmMapInfo(MapInfo)
+                If dialog.ShowDialog(Me) = DialogResult.OK Then
+                    MapInfo = dialog.EditedMapInfo
+                    lblMapNombre.Text = MapInfo.Name
+                    lblMapMusica.Text = MapInfo.Music
+                    lblMapVersion.Text = MapInfo.MapVersion.ToString()
+                    lblMapNivelMin.Text = MapInfo.MinLevel.ToString()
+                    UpdateMapStatus("Información del mapa actualizada")
+                End If
+            End Using
+        End Sub
+
+        Private Sub MapInfo_Click(sender As Object, e As EventArgs) _
+            Handles mapInfoButton.Click, mapInfoMenuItem.Click
+            If _document Is Nothing Then Return
+            ShowMapInfoDialog()
         End Sub
 
         Private Sub ApplySettingsToView()

@@ -4,6 +4,7 @@ Imports System.Windows.Forms
 Imports System.ComponentModel
 Imports WorldEditorNet.WorldEditorNet.Core
 Imports System.Collections.Generic
+Imports System.Diagnostics
 
 Namespace WorldEditorNet
 
@@ -46,6 +47,7 @@ Namespace WorldEditorNet
         Private _emptyMapView As Boolean = True
         Private _cursorX As Integer
         Private _cursorY As Integer
+        Private _insertPreviewEnabled As Boolean
         Private _viewportX As Integer = 50
         Private _viewportY As Integer = 50
 
@@ -69,6 +71,20 @@ Namespace WorldEditorNet
                 Invalidate()
             End Set
         End Property
+
+        Public Property InsertPreviewEnabled As Boolean
+            Get
+                Return _insertPreviewEnabled
+            End Get
+            Set(value As Boolean)
+                _insertPreviewEnabled = value
+                Invalidate()
+            End Set
+        End Property
+
+        Public Property InsertPreviewLayer As Integer
+        Public Property InsertPreviewGrh As Integer
+        Public Property InsertPreviewSettings As SurfacePatternSettings
 
         Public Property BrushEnabled As Boolean
             Get
@@ -354,12 +370,11 @@ Namespace WorldEditorNet
             If bitmap Is Nothing OrElse record.X < 0 OrElse record.Y < 0 OrElse
                record.X + record.Width > bitmap.Width OrElse record.Y + record.Height > bitmap.Height Then Return False
 
-            Dim scale As Double = Math.Min(destination.Width / CDbl(record.Width),
-                                           destination.Height / CDbl(record.Height))
-            Dim drawWidth As Integer = Math.Max(1, CInt(record.Width * scale))
-            Dim drawHeight As Integer = Math.Max(1, CInt(record.Height * scale))
-            Dim left As Integer = destination.Left + (destination.Width - drawWidth) \ 2
-            Dim top As Integer = destination.Top + (destination.Height - drawHeight) \ 2
+            'VistaPreviaDeSup del VB6 dibuja el GRH a su tamaño real, sin Zoom.
+            Dim drawWidth As Integer = record.Width
+            Dim drawHeight As Integer = record.Height
+            Dim left As Integer = destination.Left
+            Dim top As Integer = destination.Top
             graphics.DrawImage(bitmap,
                                New Rectangle(left, top, drawWidth, drawHeight),
                                New Rectangle(record.X, record.Y, record.Width, record.Height),
@@ -755,16 +770,18 @@ Namespace WorldEditorNet
 
             Using blockedBrush As New SolidBrush(Color.Red)
                     Using selectedBrush As New SolidBrush(Color.FromArgb(120, Color.Gold))
-                        Dim visibleColumns As Integer = Math.Max(1, ClientSize.Width \ _cellSize)
-                        Dim visibleRows As Integer = Math.Max(1, ClientSize.Height \ _cellSize)
+                        'ConvertCPtoTP del VB6 usa MainViewShp, no el tamaño
+                        'interno del buffer de dibujo.
+                        Dim visibleColumns As Integer = Math.Max(1, ParentClientWidth() \ _cellSize)
+                        Dim visibleRows As Integer = Math.Max(1, ParentClientHeight() \ _cellSize)
 
                         ' RenderScreen del VB6 dibuja TileBufferSize celdas fuera
                         ' de la vista y después presenta solo el rectángulo visible.
                         ' Es imprescindible para que los GRH grandes no se corten
                         ' cuando su celda ancla está junto al borde.
                         Const tileBufferSize As Integer = 8
-                        Dim originX As Integer = _viewportX - (visibleColumns \ 2)
-                        Dim originY As Integer = _viewportY - (visibleRows \ 2)
+                        Dim originX As Integer = Math.Max(1, _viewportX - (visibleColumns \ 2))
+                        Dim originY As Integer = Math.Max(1, _viewportY - (visibleRows \ 2))
                         Dim firstX As Integer = Math.Max(1, originX - tileBufferSize)
                         Dim firstY As Integer = Math.Max(1, originY - tileBufferSize)
                         Dim lastX As Integer = Math.Min(100, originX + visibleColumns + tileBufferSize)
@@ -849,7 +866,7 @@ Namespace WorldEditorNet
                                                                   cellRect.Top + markerOffset,
                                                                   markerSize, markerSize)
                                     End If
-                                    If x = _selectedX AndAlso y = _selectedY Then
+                                    If Not _insertPreviewEnabled AndAlso x = _selectedX AndAlso y = _selectedY Then
                                         e.Graphics.FillRectangle(selectedBrush, cellRect)
                                     End If
 
@@ -863,6 +880,55 @@ Namespace WorldEditorNet
                         End If
                     End Using
                 End Using
+            If _insertPreviewEnabled AndAlso _cursorX >= 1 AndAlso _cursorY >= 1 AndAlso
+               _cursorX <= 100 AndAlso _cursorY <= 100 AndAlso InsertPreviewGrh > 0 Then
+                Dim originX As Integer = Math.Max(1, _viewportX - (Math.Max(1, ParentClientWidth() \ _cellSize) \ 2))
+                Dim originY As Integer = Math.Max(1, _viewportY - (Math.Max(1, ParentClientHeight() \ _cellSize) \ 2))
+
+                'Equivalente a modDirectDraw: special 5 marca el rectángulo
+                'ocupado por el mosaico bajo el puntero usando Graficos\0.bmp.
+                If InsertPreviewSettings IsNot Nothing AndAlso InsertPreviewSettings.Mosaic Then
+                    Dim width As Integer = Math.Max(1, InsertPreviewSettings.Width)
+                    Dim height As Integer = Math.Max(1, InsertPreviewSettings.Height)
+                    Dim offsetX As Integer = If(InsertPreviewSettings.OffsetEnabled, InsertPreviewSettings.OffsetX, 0)
+                    Dim offsetY As Integer = If(InsertPreviewSettings.OffsetEnabled, InsertPreviewSettings.OffsetY, 0)
+                    Dim firstX As Integer = CInt(Math.Floor(((_cursorX + offsetX) / CDbl(width)))) * width - offsetX
+                    Dim firstY As Integer = CInt(Math.Floor(((_cursorY + offsetY) / CDbl(height)))) * height - offsetY
+
+                    'Previsualización temporal: no modifica el mapa hasta el clic.
+                    Dim previewGrh As Integer = InsertPreviewSettings.GetGraphicIndex(
+                        InsertPreviewGrh, _cursorX, _cursorY)
+                    Dim previewOffset As Integer = 2
+                    DrawGraphic(e.Graphics,
+                                CShort(Math.Min(Short.MaxValue, Math.Max(0, previewGrh))),
+                                _cursorX, _cursorY, InsertPreviewLayer,
+                                (_cursorX - originX) * _cellSize,
+                                (_cursorY - originY) * _cellSize,
+                                previewOffset)
+
+                    For y As Integer = firstY To firstY + height - 1
+                        For x As Integer = firstX To firstX + width - 1
+                            If x >= 1 AndAlso x <= 100 AndAlso y >= 1 AndAlso y <= 100 Then
+                                Dim mosaicLeft As Integer = (x - originX) * _cellSize
+                                Dim mosaicTop As Integer = (y - originY) * _cellSize
+                                'VB6 no dibuja un GRH provisional aquí. Solo pinta
+                                'el gráfico especial 5 sobre el render normal.
+                                DrawSpecialGraphic(e.Graphics, 5,
+                                                   mosaicLeft,
+                                                   mosaicTop)
+                            End If
+                        Next
+                    Next
+                Else
+                    Dim previewOffset As Integer = 2
+                    DrawGraphic(e.Graphics,
+                                CShort(Math.Min(Short.MaxValue, Math.Max(0, InsertPreviewGrh))),
+                                _cursorX, _cursorY, InsertPreviewLayer,
+                                (_cursorX - originX) * _cellSize,
+                                (_cursorY - originY) * _cellSize,
+                                previewOffset)
+                End If
+            End If
             DrawCursorCoordinates(e.Graphics)
             RaiseEvent FrameRendered(Me, EventArgs.Empty)
         End Sub
@@ -1090,8 +1156,27 @@ Namespace WorldEditorNet
         End Sub
 
         Private Sub UpdateCursorCell(pixelX As Integer, pixelY As Integer)
-            Dim x As Integer = ViewportCellX(pixelX)
-            Dim y As Integer = ViewportCellY(pixelY)
+            Dim visibleColumns As Integer = Math.Max(1, ParentClientWidth() \ _cellSize)
+            Dim visibleRows As Integer = Math.Max(1, ParentClientHeight() \ _cellSize)
+            Dim firstX As Integer = Math.Max(1, _viewportX - visibleColumns \ 2)
+            Dim firstY As Integer = Math.Max(1, _viewportY - visibleRows \ 2)
+            Dim offsetX As Integer = pixelX Mod _cellSize
+            Dim offsetY As Integer = pixelY Mod _cellSize
+            Dim worldX As Integer = firstX + (pixelX \ _cellSize)
+            Dim worldY As Integer = firstY + (pixelY \ _cellSize)
+            Dim x As Integer = worldX
+            Dim y As Integer = worldY
+
+            Debug.WriteLine($"MouseX={pixelX}")
+            Debug.WriteLine($"MouseY={pixelY}")
+            Debug.WriteLine($"WorldX={worldX}")
+            Debug.WriteLine($"WorldY={worldY}")
+            Debug.WriteLine($"TileX={x}")
+            Debug.WriteLine($"TileY={y}")
+            Debug.WriteLine($"OffsetX={offsetX}")
+            Debug.WriteLine($"OffsetY={offsetY}")
+            Debug.WriteLine($"ViewportX={_viewportX}; ViewportY={_viewportY}; FirstY={firstY}; ParentHeight={ParentClientHeight()}; ControlHeight={ClientSize.Height}")
+
             If x < 1 OrElse x > 100 OrElse y < 1 OrElse y > 100 Then
                 _cursorX = 0
                 _cursorY = 0

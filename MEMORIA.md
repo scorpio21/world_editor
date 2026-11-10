@@ -543,3 +543,125 @@ No se debe comenzar la conexión funcional completa hasta cerrar la issue #8.
   `modRenderer.RenderScreen` del VB6 para `TileExit.Map <> 0`.
 - ✅ Se mantiene la visibilidad controlada por `CBVerTraslados`/`ShowTranslados`.
 
+## 09/11/2026 — Menú Mapa Nuevo
+
+- ✅ `Mapa Nuevo` conserva la confirmación de cambios sin guardar mediante
+  `ConfirmSaveChanges`, equivalente a `DeseaGuardarMapa` del VB6.
+- ✅ Limpia el nombre de archivo retenido por el diálogo de apertura antes de
+  crear el mapa nuevo.
+- ✅ `CreateNewMap` ya realiza el resto del flujo equivalente a
+  `modMapIO.NuevoMapa` y `cmdInformacionDelMapa_Click`: mapa vacío, pestañas
+  ocultas, información por defecto, radar y vista reiniciados.
+- ⚠️ El modo caminata no existe todavía en la migración .NET; por tanto no se
+  añade comportamiento inventado al crear un mapa nuevo.
+
+## 09/11/2026 — Estado del mapa nuevo
+
+- ✅ Corregido el estado final de `CreateNewMap`: el mapa nuevo queda cargado y
+  renderizable, igual que `modMapIO.NuevoMapa` al establecer `MapaCargado = True`
+  y `EngineRun = True`.
+- ✅ La vista deja de tratar el mapa nuevo como una pantalla vacía; conserva la
+  matriz 100×100 con `Graphic1 = 1` y permite refrescar el render, radar y
+  navegación.
+
+## 09/11/2026 — Formulario Información del Mapa
+
+- ✅ Se conectó el formulario diseñado `frmMapInfo` al menú `Mapa Nuevo`.
+- ✅ El diálogo carga y devuelve nombre, versión, música, zona, terreno, nivel
+  mínimo, restricción y las opciones del mapa.
+- ✅ El botón `Información del Mapa` y su entrada de menú reutilizan el mismo
+  diálogo modal.
+- ✅ El flujo conserva el comportamiento de `cmdInformacionDelMapa_Click` del
+  VB6 sin modificar el diseñador.
+- ⚠️ El botón `Más` queda preparado, pero `frmMusica` aún no está migrado; no
+  se inventó un selector de música alternativo.
+- ✅ Compilación Debug correcta: 0 advertencias, 0 errores.
+
+## 10/11/2026 — Previsualización de inserción de superficies
+
+- ✅ El modo `Insertar Superficie` ahora muestra el GRH seleccionado bajo el
+  puntero, siguiendo el comportamiento de `cSeleccionarSuperficie_Click` y
+  `VistaPreviaDeSup` del VB6.
+- ✅ El clic continúa aplicando la superficie en la celda seleccionada y el
+  preview se actualiza al cambiar GRH, capa o superficie.
+- ✅ La compilación se verificó en una carpeta de salida separada porque la
+  aplicación estaba abierta y bloqueaba la DLL principal: 0 errores y 0 avisos.
+
+## 10/11/2026 — Cuadrícula del área de inserción
+
+- ✅ Al seleccionar una superficie se cargan también sus dimensiones de mosaico
+  (`SupData.Width` y `SupData.Height`), igual que `DameGrhIndex` en VB6.
+- ✅ El modo de inserción dibuja el área ocupada mediante el gráfico especial 5
+  de `Graficos\\0.bmp`, siguiendo la lógica de `modDirectDraw`.
+- ✅ `EstSelectPanel(0, False)` solo controla el estado visual/habilitado del
+  panel; el rectángulo del puntero pertenece al render y ya está replicado en
+  `MapSurfaceControl`.
+- ✅ Compilación Debug verificada: 0 errores y 0 advertencias.
+
+## 10/11/2026 — Alineación del puntero de inserción
+
+- ✅ El origen del render y la conversión de coordenadas del puntero usan ahora
+  el mismo tamaño visible de `MainViewShp`, equivalente a `ConvertCPtoTP` del
+  VB6.
+- ✅ La cuadrícula especial 5 y la superficie previsualizada comparten ese
+  mismo origen, evitando el desplazamiento entre puntero, rectángulo y GRH.
+- ✅ Compilación verificada: 0 errores y 0 advertencias.
+
+## 10/11/2026 — Rectángulo de inserción según VB6
+
+- ✅ La inserción de superficies con mosaico dibuja únicamente el gráfico
+  especial 5 sobre el render normal, como `modDirectDraw.RenderScreen`.
+- ✅ No se dibuja un GRH provisional inventado; el GRH aparece solo después de
+  aplicar la edición con `ClickEdit`.
+- ✅ El relleno amarillo de la celda seleccionada se oculta durante la
+  inserción para no confundirse con el puntero rojo especial 5.
+- ✅ Compilación Debug verificada: 0 errores y 0 advertencias.
+
+## 10/11/2026 — Orden del rectángulo de inserción
+
+- ✅ El GRH del terreno se dibuja antes del gráfico especial 5, igual que en
+  `modDirectDraw.RenderScreen` del VB6.
+- ✅ La cuadrícula roja queda visible por encima del terreno previsualizado.
+
+## 10/11/2026 — Superficie bajo el puntero
+
+- ✅ `MouseMove` solo actualiza la previsualización y no modifica el mapa.
+- ✅ El clic aplica la superficie en la celda seleccionada mediante el flujo de
+  edición, evitando pintar todo el recorrido del ratón.
+- ✅ La cuadrícula especial 5 se conserva sobre la previsualización.
+- ✅ Compilación Debug verificada: 0 errores y 0 advertencias.
+
+## 10/11/2026 — Diagnóstico de coordenadas del ratón
+
+- ✅ Añadidas trazas temporales en `UpdateCursorCell` para comparar posición
+  local, mundo, tile, resto de celda, viewport y alturas reales del control.
+- ⏳ Pendiente confirmar con la salida de depuración el origen exacto del
+  desplazamiento vertical antes de aplicar un offset.
+
+## 10/11/2026 — Corrección del origen en el borde superior
+
+- ✅ Las trazas demostraron que el ratón usaba `FirstY=1`, mientras el render
+  usaba `originY=-2` cuando `ViewportY=6`.
+- ✅ El render y `POSX` usan ahora el mismo origen limitado a la primera celda
+  del mapa; no se añadió ningún offset fijo.
+- ✅ Compilación Debug verificada: 0 errores y 0 advertencias.
+
+## 09/11/2026 — Previsualización y aviso de cambios
+
+- ✅ La previsualización de superficies usa fondo negro y dibuja el GRH a su
+  tamaño real, como `VistaPreviaDeSup` del VB6; ya no fuerza `Zoom`.
+- ✅ Las ediciones del mapa marcan también `MapInfo.Changed`.
+- ✅ El cierre por la X comprueba cambios del documento y de la información del
+  mapa, mostrando la confirmación antes de salir.
+- ✅ Al guardar correctamente se limpian ambos estados de cambios.
+- ✅ Compilación Debug correcta: 0 advertencias, 0 errores.
+
+## 09/11/2026 — Filtro y botones de superficies
+
+- ✅ `surfaceFilterCombo` ahora filtra la lista por nombre sin perder el índice
+  real de la superficie/GRH.
+- ✅ Se conserva la correspondencia entre el elemento filtrado y `SupDataArray`.
+- ✅ Los botones `Quitar en esta Capa`, `Quitar en Capas 2 y 3` e `Insertar
+  Superficie` se llevan al frente al activar el panel, respetando su diseño.
+- ✅ Compilación Debug correcta: 0 advertencias, 0 errores.
+
